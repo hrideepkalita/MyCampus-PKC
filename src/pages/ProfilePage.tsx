@@ -188,11 +188,12 @@ const ProfilePage = () => {
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
+          {/* Main profile photo */}
           <div className="relative h-24 w-24">
             <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
               <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
             </div>
-            <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={(e) => handlePhotoUpload(e)} className="hidden" />
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -205,6 +206,40 @@ const ProfilePage = () => {
               )}
             </button>
           </div>
+
+          {/* Additional photos grid */}
+          <div className="mt-4 flex gap-2">
+            {[0, 1, 2].map((index) => {
+              const photoUrl = displayProfile.photos?.[index];
+              return (
+                <div key={index} className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-dashed border-border bg-muted">
+                  {photoUrl ? (
+                    <>
+                      <img src={photoUrl} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
+                      <button
+                        onClick={() => handleDeletePhoto(index)}
+                        className="absolute top-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px]"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <label className="flex h-full w-full cursor-pointer items-center justify-center">
+                      <Camera className="h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handlePhotoUpload(e, displayProfile.photos?.length || 0)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">Add up to 3 additional photos</p>
+
           <div className="mt-3 flex items-center gap-2">
             {editing ? (
               <div className="flex gap-2">
