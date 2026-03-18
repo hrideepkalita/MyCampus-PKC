@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
 import InterestTag from "@/components/InterestTag";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, LogOut, Edit, Shield, Instagram, Save, X } from "lucide-react";
+import { Check, LogOut, Edit, Shield, Instagram, Save, X, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
+import { toast } from "sonner";
 
 interface Profile {
   name: string;
@@ -29,6 +30,8 @@ const ProfilePage = () => {
   const [form, setForm] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -89,6 +92,37 @@ const ProfilePage = () => {
     navigate("/");
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/avatar.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast.error("Upload failed: " + uploadError.message);
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const photoUrl = urlData.publicUrl + "?t=" + Date.now();
+    await supabase.from("profiles").update({ photo_url: photoUrl }).eq("id", user.id);
+    setProfile(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+    setForm(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+    toast.success("Photo updated!");
+    setUploading(false);
+  };
+
   const toggleInterest = (interest: string) => {
     if (!form) return;
     const has = form.interests.includes(interest);
@@ -125,8 +159,22 @@ const ProfilePage = () => {
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
-          <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
-            <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
+          <div className="relative h-24 w-24">
+            <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
+              <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
+            </div>
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-all hover:scale-105 disabled:opacity-50"
+            >
+              {uploading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
+            </button>
           </div>
           <div className="mt-3 flex items-center gap-2">
             {editing ? (
