@@ -15,6 +15,7 @@ interface Profile {
   branch: string | null;
   bio: string | null;
   photo_url: string | null;
+  photos: string[];
   interests: string[];
   looking_for: string | null;
   verified: string | null;
