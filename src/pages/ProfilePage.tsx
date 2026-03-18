@@ -262,6 +262,15 @@ const ProfilePage = () => {
           ) : (
             <p className="text-sm text-muted-foreground">{displayProfile.branch || "Add your branch"}</p>
           )}
+          {editing ? (
+            <div className="mt-2 flex gap-2">
+              {["Male", "Female", "Other"].map(g => (
+                <button key={g} onClick={() => setForm({...form!, gender: g})} className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${form?.gender === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground border border-border"}`}>{g}</button>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">{displayProfile.gender || "Set your gender"}</p>
+          )}
         </div>
 
         <div className="mt-6 rounded-2xl bg-card p-4">
