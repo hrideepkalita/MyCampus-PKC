@@ -55,7 +55,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-6 overflow-hidden">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6 overflow-hidden">
       <FloatingHearts count={15} />
       <div className="relative z-10 w-full max-w-sm animate-pop-in">
         <div className="flex flex-col items-center mb-8">

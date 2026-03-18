@@ -174,7 +174,7 @@ const ProfilePage = () => {
   if (!displayProfile) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-[100dvh] bg-background pb-24">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
           <h1 className="font-display text-lg font-bold text-foreground">My Profile</h1>

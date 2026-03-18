@@ -19,7 +19,7 @@ const ProfileCard = ({ profile, onLike, onSkip }: ProfileCardProps) => {
       className="relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl bg-card shadow-lg"
     >
       {/* Photo */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden">
+      <div className="relative aspect-[3/4] max-h-[60vh] w-full overflow-hidden">
         <img
           src={profile.photo}
           alt={profile.name}
