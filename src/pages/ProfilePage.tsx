@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
 import InterestTag from "@/components/InterestTag";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, LogOut, Edit, Shield, Instagram, Save, X } from "lucide-react";
+import { Check, LogOut, Edit, Shield, Instagram, Save, X, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
+import { toast } from "sonner";
 
 interface Profile {
   name: string;
