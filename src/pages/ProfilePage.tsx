@@ -54,6 +54,7 @@ const ProfilePage = () => {
         branch: data.branch,
         bio: data.bio,
         photo_url: data.photo_url,
+        photos: (data.photos as string[]) || [],
         interests: (data.interests as string[]) || [],
         looking_for: data.looking_for,
         verified: data.verified,
