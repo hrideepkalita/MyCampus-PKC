@@ -19,10 +19,10 @@ const FloatingHearts = ({ count = 12 }: { count?: number }) => {
     const generated: Heart[] = Array.from({ length: count }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
-      size: 12 + Math.random() * 18,
+      size: 20 + Math.random() * 28,
       duration: 8 + Math.random() * 12,
       delay: Math.random() * 6,
-      opacity: 0.08 + Math.random() * 0.12,
+      opacity: 0.1 + Math.random() * 0.15,
     }));
     setHearts(generated);
   }, [count]);
