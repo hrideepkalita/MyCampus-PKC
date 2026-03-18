@@ -15,6 +15,7 @@ interface Profile {
   branch: string | null;
   bio: string | null;
   photo_url: string | null;
+  photos: string[];
   interests: string[];
   looking_for: string | null;
   verified: string | null;
@@ -53,6 +54,7 @@ const ProfilePage = () => {
         branch: data.branch,
         bio: data.bio,
         photo_url: data.photo_url,
+        photos: (data.photos as string[]) || [],
         interests: (data.interests as string[]) || [],
         looking_for: data.looking_for,
         verified: data.verified,
@@ -92,7 +94,7 @@ const ProfilePage = () => {
     navigate("/");
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, index?: number) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     if (!file.type.startsWith("image/")) {
@@ -105,7 +107,11 @@ const ProfilePage = () => {
     }
     setUploading(true);
     const ext = file.name.split(".").pop();
-    const path = `${user.id}/avatar.${ext}`;
+    const isMainPhoto = index === undefined;
+    const path = isMainPhoto
+      ? `${user.id}/avatar.${ext}`
+      : `${user.id}/photo_${index}.${ext}`;
+
     const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(path, file, { upsert: true });
@@ -116,11 +122,34 @@ const ProfilePage = () => {
     }
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
     const photoUrl = urlData.publicUrl + "?t=" + Date.now();
-    await supabase.from("profiles").update({ photo_url: photoUrl }).eq("id", user.id);
-    setProfile(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
-    setForm(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+
+    if (isMainPhoto) {
+      await supabase.from("profiles").update({ photo_url: photoUrl }).eq("id", user.id);
+      setProfile(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+      setForm(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+    } else {
+      const currentPhotos = [...(profile?.photos || [])];
+      currentPhotos[index] = photoUrl;
+      // Ensure array has no undefined gaps
+      const cleanPhotos = currentPhotos.filter(Boolean);
+      await supabase.from("profiles").update({ photos: cleanPhotos }).eq("id", user.id);
+      setProfile(prev => prev ? { ...prev, photos: cleanPhotos } : prev);
+      setForm(prev => prev ? { ...prev, photos: cleanPhotos } : prev);
+    }
     toast.success("Photo updated!");
     setUploading(false);
+    // Reset file input
+    e.target.value = "";
+  };
+
+  const handleDeletePhoto = async (index: number) => {
+    if (!user || !profile) return;
+    const currentPhotos = [...profile.photos];
+    currentPhotos.splice(index, 1);
+    await supabase.from("profiles").update({ photos: currentPhotos }).eq("id", user.id);
+    setProfile(prev => prev ? { ...prev, photos: currentPhotos } : prev);
+    setForm(prev => prev ? { ...prev, photos: currentPhotos } : prev);
+    toast.success("Photo removed");
   };
 
   const toggleInterest = (interest: string) => {
@@ -159,11 +188,12 @@ const ProfilePage = () => {
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
+          {/* Main profile photo */}
           <div className="relative h-24 w-24">
             <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
               <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
             </div>
-            <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={(e) => handlePhotoUpload(e)} className="hidden" />
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -176,6 +206,40 @@ const ProfilePage = () => {
               )}
             </button>
           </div>
+
+          {/* Additional photos grid */}
+          <div className="mt-4 flex gap-2">
+            {[0, 1, 2].map((index) => {
+              const photoUrl = displayProfile.photos?.[index];
+              return (
+                <div key={index} className="relative h-20 w-20 rounded-xl overflow-hidden border-2 border-dashed border-border bg-muted">
+                  {photoUrl ? (
+                    <>
+                      <img src={photoUrl} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
+                      <button
+                        onClick={() => handleDeletePhoto(index)}
+                        className="absolute top-0.5 right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px]"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <label className="flex h-full w-full cursor-pointer items-center justify-center">
+                      <Camera className="h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handlePhotoUpload(e, displayProfile.photos?.length || 0)}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground">Add up to 3 additional photos</p>
+
           <div className="mt-3 flex items-center gap-2">
             {editing ? (
               <div className="flex gap-2">

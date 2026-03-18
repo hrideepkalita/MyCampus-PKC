@@ -22,6 +22,8 @@ interface Profile {
   phone: string | null;
 }
 
+const GENDER_FILTERS = ["All", "Male", "Female"] as const;
+
 const DiscoverPage = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -30,15 +32,16 @@ const DiscoverPage = () => {
   const [matchName, setMatchName] = useState("");
   const [likesLeft, setLikesLeft] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [genderFilter, setGenderFilter] = useState<string>("All");
 
   useEffect(() => {
     fetchProfiles();
-  }, [user]);
+  }, [user, genderFilter]);
 
   const fetchProfiles = async () => {
     if (!user) return;
+    setLoading(true);
     
-    // Get profiles excluding self and already-swiped
     const { data: likedIds } = await supabase
       .from("likes")
       .select("to_user_id")
@@ -46,12 +49,18 @@ const DiscoverPage = () => {
 
     const excludeIds = [user.id, ...(likedIds?.map(l => l.to_user_id) || [])];
 
-    const { data } = await supabase
+    let query = supabase
       .from("profiles")
       .select("*")
       .not("id", "in", `(${excludeIds.join(",")})`)
       .not("age", "is", null)
       .limit(50);
+
+    if (genderFilter !== "All") {
+      query = query.eq("gender", genderFilter);
+    }
+
+    const { data } = await query;
 
     setProfiles((data as Profile[]) || []);
     setCurrentIndex(0);
@@ -115,9 +124,25 @@ const DiscoverPage = () => {
             </span>
           </div>
         </div>
+        {/* Gender filter tabs */}
+        <div className="mx-auto flex max-w-md gap-1 px-4 py-2">
+          {GENDER_FILTERS.map((g) => (
+            <button
+              key={g}
+              onClick={() => setGenderFilter(g)}
+              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition-colors ${
+                genderFilter === g
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-2">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
