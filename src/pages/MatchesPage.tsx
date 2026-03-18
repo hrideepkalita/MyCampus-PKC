@@ -49,7 +49,7 @@ const MatchesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-[100dvh] bg-background pb-24">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto max-w-md px-4 py-3">
           <h1 className="font-display text-lg font-bold text-foreground">Matches</h1>

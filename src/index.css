@@ -49,6 +49,12 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -56,6 +62,14 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #root {
+    min-height: 100dvh;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
