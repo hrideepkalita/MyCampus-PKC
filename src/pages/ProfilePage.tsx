@@ -159,8 +159,22 @@ const ProfilePage = () => {
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
-          <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
-            <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
+          <div className="relative h-24 w-24">
+            <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
+              <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
+            </div>
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-all hover:scale-105 disabled:opacity-50"
+            >
+              {uploading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
+            </button>
           </div>
           <div className="mt-3 flex items-center gap-2">
             {editing ? (
