@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
-import { useEffect } from "react";
+import FloatingHearts from "@/components/FloatingHearts";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -32,7 +33,7 @@ const LoginPage = () => {
           email,
           password,
           options: {
-            data: { name },
+            data: { name, gender },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -54,8 +55,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6">
-      <div className="w-full max-w-sm animate-pop-in">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-background px-6 overflow-hidden">
+      <FloatingHearts count={15} />
+      <div className="relative z-10 w-full max-w-sm animate-pop-in">
         <div className="flex flex-col items-center mb-8">
           <img src={logo} alt="MyCampus" className="h-20 w-20 mb-3" />
           <h1 className="font-display text-2xl font-bold text-foreground">MyCampus</h1>
@@ -64,14 +66,32 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <div className="flex gap-2">
+                {["Male", "Female", "Other"].map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGender(g)}
+                    className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-colors ${
+                      gender === g
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           <input
             type="email"
