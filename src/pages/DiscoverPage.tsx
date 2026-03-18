@@ -124,9 +124,25 @@ const DiscoverPage = () => {
             </span>
           </div>
         </div>
+        {/* Gender filter tabs */}
+        <div className="mx-auto flex max-w-md gap-1 px-4 py-2">
+          {GENDER_FILTERS.map((g) => (
+            <button
+              key={g}
+              onClick={() => setGenderFilter(g)}
+              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition-colors ${
+                genderFilter === g
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-2">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
