@@ -82,6 +82,7 @@ const ProfilePage = () => {
         looking_for: form.looking_for,
         instagram: form.instagram,
         phone: form.phone,
+        photos: form.photos,
       })
       .eq("id", user.id);
     setProfile(form);
