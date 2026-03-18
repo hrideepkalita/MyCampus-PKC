@@ -14,7 +14,155 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      confession_likes: {
+        Row: {
+          confession_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          confession_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          confession_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "confession_likes_confession_id_fkey"
+            columns: ["confession_id"]
+            isOneToOne: false
+            referencedRelation: "confessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      confessions: {
+        Row: {
+          created_at: string
+          id: string
+          tag: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          tag?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          tag?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      likes: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          is_like: boolean
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          is_like?: boolean
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          is_like?: boolean
+          to_user_id?: string
+        }
+        Relationships: []
+      }
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          bio: string | null
+          branch: string | null
+          created_at: string
+          gender: string | null
+          id: string
+          instagram: string | null
+          interests: string[] | null
+          looking_for: string | null
+          name: string
+          phone: string | null
+          photo_url: string | null
+          updated_at: string
+          verified: string | null
+        }
+        Insert: {
+          age?: number | null
+          bio?: string | null
+          branch?: string | null
+          created_at?: string
+          gender?: string | null
+          id: string
+          instagram?: string | null
+          interests?: string[] | null
+          looking_for?: string | null
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          verified?: string | null
+        }
+        Update: {
+          age?: number | null
+          bio?: string | null
+          branch?: string | null
+          created_at?: string
+          gender?: string | null
+          id?: string
+          instagram?: string | null
+          interests?: string[] | null
+          looking_for?: string | null
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+          verified?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
