@@ -22,6 +22,8 @@ interface Profile {
   phone: string | null;
 }
 
+const GENDER_FILTERS = ["All", "Male", "Female"] as const;
+
 const DiscoverPage = () => {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -30,15 +32,16 @@ const DiscoverPage = () => {
   const [matchName, setMatchName] = useState("");
   const [likesLeft, setLikesLeft] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [genderFilter, setGenderFilter] = useState<string>("All");
 
   useEffect(() => {
     fetchProfiles();
-  }, [user]);
+  }, [user, genderFilter]);
 
   const fetchProfiles = async () => {
     if (!user) return;
+    setLoading(true);
     
-    // Get profiles excluding self and already-swiped
     const { data: likedIds } = await supabase
       .from("likes")
       .select("to_user_id")
@@ -46,12 +49,18 @@ const DiscoverPage = () => {
 
     const excludeIds = [user.id, ...(likedIds?.map(l => l.to_user_id) || [])];
 
-    const { data } = await supabase
+    let query = supabase
       .from("profiles")
       .select("*")
       .not("id", "in", `(${excludeIds.join(",")})`)
       .not("age", "is", null)
       .limit(50);
+
+    if (genderFilter !== "All") {
+      query = query.eq("gender", genderFilter);
+    }
+
+    const { data } = await query;
 
     setProfiles((data as Profile[]) || []);
     setCurrentIndex(0);
