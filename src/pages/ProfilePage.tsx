@@ -94,7 +94,7 @@ const ProfilePage = () => {
     navigate("/");
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, index?: number) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     if (!file.type.startsWith("image/")) {
@@ -107,7 +107,11 @@ const ProfilePage = () => {
     }
     setUploading(true);
     const ext = file.name.split(".").pop();
-    const path = `${user.id}/avatar.${ext}`;
+    const isMainPhoto = index === undefined;
+    const path = isMainPhoto
+      ? `${user.id}/avatar.${ext}`
+      : `${user.id}/photo_${index}.${ext}`;
+
     const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(path, file, { upsert: true });
@@ -118,11 +122,34 @@ const ProfilePage = () => {
     }
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
     const photoUrl = urlData.publicUrl + "?t=" + Date.now();
-    await supabase.from("profiles").update({ photo_url: photoUrl }).eq("id", user.id);
-    setProfile(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
-    setForm(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+
+    if (isMainPhoto) {
+      await supabase.from("profiles").update({ photo_url: photoUrl }).eq("id", user.id);
+      setProfile(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+      setForm(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+    } else {
+      const currentPhotos = [...(profile?.photos || [])];
+      currentPhotos[index] = photoUrl;
+      // Ensure array has no undefined gaps
+      const cleanPhotos = currentPhotos.filter(Boolean);
+      await supabase.from("profiles").update({ photos: cleanPhotos }).eq("id", user.id);
+      setProfile(prev => prev ? { ...prev, photos: cleanPhotos } : prev);
+      setForm(prev => prev ? { ...prev, photos: cleanPhotos } : prev);
+    }
     toast.success("Photo updated!");
     setUploading(false);
+    // Reset file input
+    e.target.value = "";
+  };
+
+  const handleDeletePhoto = async (index: number) => {
+    if (!user || !profile) return;
+    const currentPhotos = [...profile.photos];
+    currentPhotos.splice(index, 1);
+    await supabase.from("profiles").update({ photos: currentPhotos }).eq("id", user.id);
+    setProfile(prev => prev ? { ...prev, photos: currentPhotos } : prev);
+    setForm(prev => prev ? { ...prev, photos: currentPhotos } : prev);
+    toast.success("Photo removed");
   };
 
   const toggleInterest = (interest: string) => {
