@@ -92,6 +92,37 @@ const ProfilePage = () => {
     navigate("/");
   };
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/avatar.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+    if (uploadError) {
+      toast.error("Upload failed: " + uploadError.message);
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const photoUrl = urlData.publicUrl + "?t=" + Date.now();
+    await supabase.from("profiles").update({ photo_url: photoUrl }).eq("id", user.id);
+    setProfile(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+    setForm(prev => prev ? { ...prev, photo_url: photoUrl } : prev);
+    toast.success("Photo updated!");
+    setUploading(false);
+  };
+
   const toggleInterest = (interest: string) => {
     if (!form) return;
     const has = form.interests.includes(interest);
