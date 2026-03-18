@@ -1,18 +1,56 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
+import { useEffect } from "react";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) navigate("/discover", { replace: true });
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock auth - navigate to discover
-    navigate("/discover");
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) throw error;
+        setMessage("Check your email to confirm your account!");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        navigate("/discover");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -31,14 +69,16 @@ const LoginPage = () => {
               placeholder="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
               className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           )}
           <input
-            type="text"
-            placeholder="Phone number or username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <input
@@ -46,20 +86,31 @@ const LoginPage = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
             className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
+
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+          )}
+          {message && (
+            <p className="rounded-lg bg-accent/10 px-3 py-2 text-xs text-accent">{message}</p>
+          )}
+
           <button
             type="submit"
-            className="w-full rounded-xl bg-primary py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90"
+            disabled={loading}
+            className="w-full rounded-xl bg-primary py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
           >
-            {isSignUp ? "Create Account" : "Log In"}
+            {loading ? "Please wait..." : isSignUp ? "Create Account" : "Log In"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }}
             className="font-semibold text-primary"
           >
             {isSignUp ? "Log In" : "Sign Up"}
