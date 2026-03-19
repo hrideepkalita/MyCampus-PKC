@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Flame, Plus, Heart, Flag } from "lucide-react";
@@ -55,7 +56,6 @@ const ConfessionsPage = () => {
 
     if (!rows) { setLoading(false); return; }
 
-    // Get like counts
     const confessionIds = rows.map(r => r.id);
     const { data: allLikes } = await supabase
       .from("confession_likes")
@@ -109,38 +109,38 @@ const ConfessionsPage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <h1 className="font-display text-lg font-bold text-foreground">Confessions</h1>
+      <TopBar
+        title="Confessions"
+        rightContent={
           <button
             onClick={() => setShowCompose(!showCompose)}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
           >
             <Plus className="h-4 w-4" />
           </button>
-        </div>
-        <div className="mx-auto flex max-w-md gap-2 px-4 pb-3">
-          <button
-            onClick={() => setTab("latest")}
-            className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-              tab === "latest" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
-            }`}
-          >
-            Latest
-          </button>
-          <button
-            onClick={() => setTab("trending")}
-            className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-              tab === "trending" ? "bg-pink text-primary-foreground" : "bg-card text-muted-foreground"
-            }`}
-          >
-            <Flame className="h-3 w-3" /> Trending
-          </button>
-        </div>
+        }
+      />
+      <div className="mx-auto flex max-w-md gap-2 px-4 py-2">
+        <button
+          onClick={() => setTab("latest")}
+          className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+            tab === "latest" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground"
+          }`}
+        >
+          Latest
+        </button>
+        <button
+          onClick={() => setTab("trending")}
+          className={`flex items-center gap-1 rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+            tab === "trending" ? "bg-secondary text-secondary-foreground" : "bg-card text-muted-foreground"
+          }`}
+        >
+          <Flame className="h-3 w-3" /> Trending
+        </button>
       </div>
 
       {showCompose && (
-        <div className="mx-auto max-w-md px-4 pt-4 animate-slide-up">
+        <div className="mx-auto max-w-md px-4 pt-2 animate-slide-up">
           <div className="rounded-2xl bg-card p-4">
             <textarea
               value={newText}
@@ -172,7 +172,7 @@ const ConfessionsPage = () => {
         </div>
       )}
 
-      <div className="mx-auto max-w-md space-y-3 px-4 pt-4">
+      <div className="mx-auto max-w-md space-y-3 px-4 pt-3">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -200,7 +200,7 @@ const ConfessionsPage = () => {
                     onClick={() => handleLike(confession.id, confession.user_liked)}
                     className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all active:scale-95 ${
                       confession.user_liked
-                        ? "bg-pink/15 text-pink"
+                        ? "bg-secondary/15 text-secondary"
                         : "bg-background/50 text-muted-foreground"
                     }`}
                   >

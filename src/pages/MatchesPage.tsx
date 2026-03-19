@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
+import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Instagram, Phone, ChevronRight } from "lucide-react";
@@ -50,14 +51,13 @@ const MatchesPage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="mx-auto max-w-md px-4 py-3">
-          <h1 className="font-display text-lg font-bold text-foreground">Matches</h1>
-          <p className="text-xs text-muted-foreground">{matches.length} connections</p>
-        </div>
+      <TopBar title="Matches" />
+
+      <div className="mx-auto max-w-md px-4 pt-1">
+        <p className="text-xs text-muted-foreground mb-3">{matches.length} connections</p>
       </div>
 
-      <div className="mx-auto max-w-md px-4 pt-4 space-y-3">
+      <div className="mx-auto max-w-md px-4 space-y-3">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -91,7 +91,7 @@ const MatchesPage = () => {
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Contact Info</p>
                   {match.instagram && (
                     <div className="flex items-center gap-2 text-sm text-foreground">
-                      <Instagram className="h-4 w-4 text-pink" />
+                      <Instagram className="h-4 w-4 text-secondary" />
                       {match.instagram}
                     </div>
                   )}

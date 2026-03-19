@@ -3,9 +3,10 @@ import { AnimatePresence } from "framer-motion";
 import ProfileCard from "@/components/ProfileCard";
 import MatchPopup from "@/components/MatchPopup";
 import BottomNav from "@/components/BottomNav";
+import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Eye } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -80,7 +81,6 @@ const DiscoverPage = () => {
     });
 
     if (!error) {
-      // Check if match was created
       const { data: match } = await supabase
         .from("matches")
         .select("id")
@@ -114,32 +114,30 @@ const DiscoverPage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <h1 className="font-display text-lg font-bold text-foreground">Discover</h1>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              {likesLeft} left
-            </span>
-          </div>
-        </div>
-        {/* Gender filter tabs */}
-        <div className="mx-auto flex max-w-md gap-1 px-4 py-2">
-          {GENDER_FILTERS.map((g) => (
-            <button
-              key={g}
-              onClick={() => setGenderFilter(g)}
-              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition-colors ${
-                genderFilter === g
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
+      <TopBar
+        title="Discover"
+        rightContent={
+          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            {likesLeft} left
+          </span>
+        }
+      />
+      {/* Gender filter tabs */}
+      <div className="mx-auto flex max-w-md gap-1 px-4 py-2">
+        {GENDER_FILTERS.map((g) => (
+          <button
+            key={g}
+            onClick={() => setGenderFilter(g)}
+            className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition-colors ${
+              genderFilter === g
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            {g}
+          </button>
+        ))}
       </div>
 
       <div className="px-4 pt-2">
