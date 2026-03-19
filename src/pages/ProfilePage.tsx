@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import BottomNav from "@/components/BottomNav";
+import TopBar from "@/components/TopBar";
 import InterestTag from "@/components/InterestTag";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, LogOut, Edit, Shield, Instagram, Save, X, Camera } from "lucide-react";
+import { Check, LogOut, Edit, Shield, Instagram, Save, X, Camera, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
 import { toast } from "sonner";
@@ -32,7 +33,9 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const verifyInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -98,29 +101,15 @@ const ProfilePage = () => {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, index?: number) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be under 5MB");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
     setUploading(true);
     const ext = file.name.split(".").pop();
     const isMainPhoto = index === undefined;
-    const path = isMainPhoto
-      ? `${user.id}/avatar.${ext}`
-      : `${user.id}/photo_${index}.${ext}`;
+    const path = isMainPhoto ? `${user.id}/avatar.${ext}` : `${user.id}/photo_${index}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true });
-    if (uploadError) {
-      toast.error("Upload failed: " + uploadError.message);
-      setUploading(false);
-      return;
-    }
+    const { error: uploadError } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadError) { toast.error("Upload failed: " + uploadError.message); setUploading(false); return; }
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
     const photoUrl = urlData.publicUrl + "?t=" + Date.now();
 
@@ -131,7 +120,6 @@ const ProfilePage = () => {
     } else {
       const currentPhotos = [...(profile?.photos || [])];
       currentPhotos[index] = photoUrl;
-      // Ensure array has no undefined gaps
       const cleanPhotos = currentPhotos.filter(Boolean);
       await supabase.from("profiles").update({ photos: cleanPhotos }).eq("id", user.id);
       setProfile(prev => prev ? { ...prev, photos: cleanPhotos } : prev);
@@ -139,7 +127,6 @@ const ProfilePage = () => {
     }
     toast.success("Photo updated!");
     setUploading(false);
-    // Reset file input
     e.target.value = "";
   };
 
@@ -151,6 +138,35 @@ const ProfilePage = () => {
     setProfile(prev => prev ? { ...prev, photos: currentPhotos } : prev);
     setForm(prev => prev ? { ...prev, photos: currentPhotos } : prev);
     toast.success("Photo removed");
+  };
+
+  const handleVerificationUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setVerifying(true);
+
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/verification_id.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (error) { toast.error("Upload failed"); setVerifying(false); return; }
+
+    await supabase.from("profiles").update({ verified: "pending" }).eq("id", user.id);
+    setProfile(prev => prev ? { ...prev, verified: "pending" } : prev);
+    setForm(prev => prev ? { ...prev, verified: "pending" } : prev);
+
+    // Create notification for the user
+    await supabase.from("notifications").insert({
+      user_id: user.id,
+      type: "verification",
+      title: "Verification Submitted",
+      message: "Your college ID has been submitted for verification. We'll review it shortly.",
+    });
+
+    toast.success("ID submitted for verification!");
+    setVerifying(false);
+    e.target.value = "";
   };
 
   const toggleInterest = (interest: string) => {
@@ -175,17 +191,17 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
-        <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-          <h1 className="font-display text-lg font-bold text-foreground">My Profile</h1>
+      <TopBar
+        title="My Profile"
+        rightContent={
           <button
             onClick={handleLogout}
             className="flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
           >
             <LogOut className="h-3 w-3" /> Logout
           </button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
@@ -318,7 +334,7 @@ const ProfilePage = () => {
               <>
                 {displayProfile.instagram && (
                   <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Instagram className="h-4 w-4 text-pink" /> {displayProfile.instagram}
+                    <Instagram className="h-4 w-4 text-secondary" /> {displayProfile.instagram}
                   </div>
                 )}
                 {displayProfile.phone && (
@@ -333,12 +349,42 @@ const ProfilePage = () => {
             )}
           </div>
 
+          {/* Verification section */}
           <div className="rounded-2xl bg-card p-4">
-            <p className="text-xs font-semibold text-muted-foreground mb-1">Verification</p>
-            <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Verification</p>
+            <div className="flex items-center gap-2 mb-3">
               <Shield className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium capitalize text-foreground">{displayProfile.verified}</span>
+              <span className={`text-sm font-medium capitalize ${
+                displayProfile.verified === "verified" ? "text-accent" :
+                displayProfile.verified === "pending" ? "text-yellow-600" :
+                "text-muted-foreground"
+              }`}>
+                {displayProfile.verified === "verified" ? "✅ Verified" :
+                 displayProfile.verified === "pending" ? "⏳ Pending Verification" :
+                 "Not Verified"}
+              </span>
             </div>
+            {displayProfile.verified !== "verified" && displayProfile.verified !== "pending" && (
+              <>
+                <p className="text-xs text-muted-foreground mb-2">Upload your college ID card to get verified</p>
+                <input ref={verifyInputRef} type="file" accept="image/*" className="hidden" onChange={handleVerificationUpload} />
+                <button
+                  onClick={() => verifyInputRef.current?.click()}
+                  disabled={verifying}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-accent py-2.5 text-sm font-display font-bold text-accent-foreground active:scale-[0.98] disabled:opacity-50"
+                >
+                  {verifying ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent-foreground border-t-transparent" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {verifying ? "Uploading..." : "Verify Profile"}
+                </button>
+              </>
+            )}
+            {displayProfile.verified === "pending" && (
+              <p className="text-xs text-muted-foreground">Your ID is being reviewed. You'll be notified once approved.</p>
+            )}
           </div>
         </div>
 

@@ -11,6 +11,9 @@ import DiscoverPage from "./pages/DiscoverPage";
 import MatchesPage from "./pages/MatchesPage";
 import ConfessionsPage from "./pages/ConfessionsPage";
 import ProfilePage from "./pages/ProfilePage";
+import NotificationsPage from "./pages/NotificationsPage";
+import LostFoundPage from "./pages/LostFoundPage";
+import SearchPage from "./pages/SearchPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +32,9 @@ const App = () => (
             <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
             <Route path="/confessions" element={<ProtectedRoute><ConfessionsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="/lost-found" element={<ProtectedRoute><LostFoundPage /></ProtectedRoute>} />
+            <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
