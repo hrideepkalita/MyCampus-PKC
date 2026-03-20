@@ -4,6 +4,7 @@ import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Instagram, Phone, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface MatchProfile {
   id: string;
@@ -16,6 +17,7 @@ interface MatchProfile {
 
 const MatchesPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,21 +72,30 @@ const MatchesPage = () => {
           </div>
         ) : (
           matches.map((match) => (
-            <button
-              key={match.id}
-              onClick={() => setSelectedId(selectedId === match.id ? null : match.id)}
-              className="w-full text-left"
-            >
-              <div className="flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98]">
-                <div className="h-14 w-14 overflow-hidden rounded-full">
-                  <img src={match.photo_url || "/placeholder.svg"} alt={match.name} className="h-full w-full object-cover" />
+            <div key={match.id}>
+              <button
+                onClick={() => navigate(`/profile/${match.id}`)}
+                className="w-full text-left"
+              >
+                <div className="flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98]">
+                  <div className="h-14 w-14 overflow-hidden rounded-full">
+                    <img src={match.photo_url || "/placeholder.svg"} alt={match.name} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-sm font-bold text-foreground">{match.name}</p>
+                    <p className="text-xs text-muted-foreground">{match.branch || "No branch"}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-display text-sm font-bold text-foreground">{match.name}</p>
-                  <p className="text-xs text-muted-foreground">{match.branch || "No branch"}</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </div>
+              </button>
+
+              {/* Contact info expandable */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setSelectedId(selectedId === match.id ? null : match.id); }}
+                className="mt-1 ml-17 text-xs text-primary font-medium"
+              >
+                {selectedId === match.id ? "Hide contact" : "Show contact info"}
+              </button>
 
               {selectedId === match.id && (
                 <div className="mt-2 rounded-2xl bg-card p-4 animate-slide-up">
@@ -106,7 +117,7 @@ const MatchesPage = () => {
                   )}
                 </div>
               )}
-            </button>
+            </div>
           ))
         )}
       </div>
