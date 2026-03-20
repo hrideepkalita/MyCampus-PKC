@@ -7,6 +7,7 @@ import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Profile {
   id: string;
@@ -27,6 +28,7 @@ const GENDER_FILTERS = ["All", "Male", "Female"] as const;
 
 const DiscoverPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
@@ -34,6 +36,7 @@ const DiscoverPage = () => {
   const [likesLeft, setLikesLeft] = useState(10);
   const [loading, setLoading] = useState(true);
   const [genderFilter, setGenderFilter] = useState<string>("All");
+  const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchProfiles();
@@ -42,18 +45,29 @@ const DiscoverPage = () => {
   const fetchProfiles = async () => {
     if (!user) return;
     setLoading(true);
-    
+
+    // Only exclude matched users and already-liked users (not skipped)
+    const { data: matchRows } = await supabase
+      .from("matches")
+      .select("user1_id, user2_id")
+      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+
+    const matchedIds = (matchRows || []).map(m =>
+      m.user1_id === user.id ? m.user2_id : m.user1_id
+    );
+
     const { data: likedIds } = await supabase
       .from("likes")
       .select("to_user_id")
-      .eq("from_user_id", user.id);
+      .eq("from_user_id", user.id)
+      .eq("is_like", true);
 
-    const excludeIds = [user.id, ...(likedIds?.map(l => l.to_user_id) || [])];
+    const excludeIds = new Set([user.id, ...matchedIds, ...(likedIds?.map(l => l.to_user_id) || [])]);
 
     let query = supabase
       .from("profiles")
       .select("*")
-      .not("id", "in", `(${excludeIds.join(",")})`)
+      .not("id", "in", `(${[...excludeIds].join(",")})`)
       .not("age", "is", null)
       .limit(50);
 
@@ -62,8 +76,11 @@ const DiscoverPage = () => {
     }
 
     const { data } = await query;
-
-    setProfiles((data as Profile[]) || []);
+    
+    // Filter out temporarily skipped profiles
+    const filteredProfiles = (data as Profile[] || []).filter(p => !skippedIds.has(p.id));
+    
+    setProfiles(filteredProfiles);
     setCurrentIndex(0);
     setLoading(false);
   };
@@ -81,6 +98,14 @@ const DiscoverPage = () => {
     });
 
     if (!error) {
+      // Send notification
+      await supabase.from("notifications").insert({
+        user_id: profile.id,
+        type: "like",
+        title: "Someone liked you!",
+        message: "A student liked your profile 💕",
+      });
+
       const { data: match } = await supabase
         .from("matches")
         .select("id")
@@ -96,18 +121,27 @@ const DiscoverPage = () => {
     }
   };
 
-  const handleSkip = async () => {
-    if (!user || !profile) return;
-    await supabase.from("likes").insert({
-      from_user_id: user.id,
-      to_user_id: profile.id,
-      is_like: false,
-    });
+  const handleSkip = () => {
+    if (!profile) return;
+    // Only skip temporarily (session only), don't record in database
+    setSkippedIds(prev => new Set(prev).add(profile.id));
     nextProfile();
   };
 
   const nextProfile = () => {
-    setCurrentIndex((prev) => prev + 1);
+    if (currentIndex + 1 >= profiles.length) {
+      // When list ends, clear skipped and reload
+      setSkippedIds(new Set());
+      fetchProfiles();
+    } else {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  };
+
+  const handleCardClick = () => {
+    if (profile) {
+      navigate(`/profile/${profile.id}`);
+    }
   };
 
   const noMoreProfiles = !loading && (!profiles.length || currentIndex >= profiles.length);
@@ -150,6 +184,12 @@ const DiscoverPage = () => {
             <span className="text-5xl">🎉</span>
             <p className="mt-4 font-display text-lg font-bold text-foreground">No more profiles</p>
             <p className="mt-1 text-sm text-muted-foreground">Check back later for new people!</p>
+            <button
+              onClick={() => { setSkippedIds(new Set()); fetchProfiles(); }}
+              className="mt-4 rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground active:scale-[0.98]"
+            >
+              Refresh Profiles
+            </button>
           </div>
         ) : (
           <AnimatePresence mode="wait">
@@ -172,6 +212,7 @@ const DiscoverPage = () => {
                 }}
                 onLike={handleLike}
                 onSkip={handleSkip}
+                onCardClick={handleCardClick}
               />
             )}
           </AnimatePresence>

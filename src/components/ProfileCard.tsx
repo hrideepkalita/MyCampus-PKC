@@ -1,15 +1,15 @@
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import InterestTag from "./InterestTag";
 import type { UserProfile } from "@/lib/mockData";
 
 interface ProfileCardProps {
   profile: UserProfile;
   onLike: () => void;
   onSkip: () => void;
+  onCardClick?: () => void;
 }
 
-const ProfileCard = ({ profile, onLike, onSkip }: ProfileCardProps) => {
+const ProfileCard = ({ profile, onLike, onSkip, onCardClick }: ProfileCardProps) => {
   return (
     <motion.div
       initial={{ scale: 0.95, opacity: 0 }}
@@ -18,17 +18,18 @@ const ProfileCard = ({ profile, onLike, onSkip }: ProfileCardProps) => {
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
       className="relative mx-auto w-full max-w-sm overflow-hidden rounded-2xl bg-card shadow-lg"
     >
-      {/* Photo */}
-      <div className="relative aspect-[3/4] max-h-[60vh] w-full overflow-hidden">
+      {/* Photo - clickable to open profile */}
+      <div
+        className="relative aspect-[3/4] max-h-[60vh] w-full overflow-hidden cursor-pointer"
+        onClick={onCardClick}
+      >
         <img
           src={profile.photo}
           alt={profile.name}
           className="h-full w-full object-cover"
         />
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
 
-        {/* Info overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-4 text-primary-foreground">
           <div className="flex items-center gap-2">
             <h2 className="font-display text-xl font-bold">
@@ -43,7 +44,6 @@ const ProfileCard = ({ profile, onLike, onSkip }: ProfileCardProps) => {
           <p className="mt-0.5 text-sm opacity-90">{profile.branch}</p>
           <p className="mt-1 text-sm opacity-80">{profile.bio}</p>
 
-          {/* Interests */}
           <div className="mt-2 flex flex-wrap gap-1.5">
             {profile.interests.map((interest) => (
               <span
@@ -55,7 +55,6 @@ const ProfileCard = ({ profile, onLike, onSkip }: ProfileCardProps) => {
             ))}
           </div>
 
-          {/* Looking for */}
           <p className="mt-2 text-xs opacity-70">{profile.lookingFor}</p>
         </div>
       </div>
@@ -71,6 +70,7 @@ const ProfileCard = ({ profile, onLike, onSkip }: ProfileCardProps) => {
         <button
           onClick={onLike}
           className="flex h-16 w-16 items-center justify-center rounded-full bg-pink text-primary-foreground shadow-lg transition-all active:scale-90 hover:shadow-xl"
+          style={{ backgroundColor: "hsl(var(--pink))" }}
         >
           <span className="text-3xl">❤️</span>
         </button>

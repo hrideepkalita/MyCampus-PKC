@@ -39,6 +39,7 @@ const LostFoundPage = () => {
   const [location, setLocation] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [posting, setPosting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -112,6 +113,20 @@ const LostFoundPage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
+      {/* Fullscreen image modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/90 p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-h-[90vh] max-w-full rounded-xl object-contain"
+          />
+        </div>
+      )}
+
       <TopBar
         title="Lost & Found"
         rightContent={
@@ -238,11 +253,16 @@ const LostFoundPage = () => {
                 </div>
               )}
               {item.image_url && (
-                <img
-                  src={item.image_url}
-                  alt={item.title}
-                  className="mt-2 h-32 w-full rounded-xl object-cover"
-                />
+                <button
+                  onClick={() => setPreviewImage(item.image_url)}
+                  className="mt-3 w-full overflow-hidden rounded-xl"
+                >
+                  <img
+                    src={item.image_url}
+                    alt={item.title}
+                    className="w-full max-h-[50vh] rounded-xl object-cover"
+                  />
+                </button>
               )}
               {item.is_resolved && (
                 <div className="mt-2 flex items-center gap-1 text-xs font-medium text-accent">

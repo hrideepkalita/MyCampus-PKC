@@ -30,7 +30,6 @@ const SearchPage = () => {
 
     const searchTerm = query.trim().toLowerCase();
 
-    // Search by name
     const { data: nameResults } = await supabase
       .from("profiles")
       .select("id, name, age, branch, photo_url, interests, verified")
@@ -38,7 +37,6 @@ const SearchPage = () => {
       .ilike("name", `%${searchTerm}%`)
       .limit(20);
 
-    // Search by interests (contains)
     const { data: interestResults } = await supabase
       .from("profiles")
       .select("id, name, age, branch, photo_url, interests, verified")
@@ -46,7 +44,6 @@ const SearchPage = () => {
       .contains("interests", [searchTerm])
       .limit(20);
 
-    // Merge and deduplicate
     const allResults = [...(nameResults || []), ...(interestResults || [])];
     const unique = Array.from(new Map(allResults.map((r) => [r.id, r])).values());
 
@@ -99,9 +96,10 @@ const SearchPage = () => {
           </div>
         ) : (
           results.map((profile) => (
-            <div
+            <button
               key={profile.id}
-              className="flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98]"
+              onClick={() => navigate(`/profile/${profile.id}`)}
+              className="w-full flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98] text-left"
             >
               <div className="h-12 w-12 overflow-hidden rounded-full flex-shrink-0">
                 <img src={profile.photo_url || "/placeholder.svg"} alt={profile.name} className="h-full w-full object-cover" />
@@ -125,7 +123,7 @@ const SearchPage = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>
