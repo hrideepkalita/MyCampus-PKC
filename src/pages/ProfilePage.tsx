@@ -4,10 +4,11 @@ import TopBar from "@/components/TopBar";
 import InterestTag from "@/components/InterestTag";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, LogOut, Edit, Shield, Instagram, Save, X, Camera, Upload } from "lucide-react";
+import { LogOut, CreditCard as Edit, Shield, Instagram, Save, X, Camera, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
 import { toast } from "sonner";
+import verificationBadge from "@/assets/Verification.jpg";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
 
@@ -47,6 +48,26 @@ const ProfilePage = () => {
     if (!user) return;
     fetchProfile();
     fetchVerificationStatus();
+
+    const subscription = supabase
+      .channel(`profile:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        () => {
+          fetchProfile();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [user]);
 
   const fetchProfile = async () => {
@@ -299,9 +320,7 @@ const ProfilePage = () => {
               <>
                 <h2 className="font-display text-xl font-bold text-foreground">{displayProfile.name}{displayProfile.age ? `, ${displayProfile.age}` : ""}</h2>
                 {displayProfile.is_verified && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
-                    <Check className="h-3 w-3" /> Verified
-                  </span>
+                  <img src={verificationBadge} alt="Verified" className="h-5 w-5 rounded-full" />
                 )}
               </>
             )}
