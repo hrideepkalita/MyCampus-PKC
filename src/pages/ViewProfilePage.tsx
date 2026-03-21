@@ -17,6 +17,7 @@ interface Profile {
   interests: string[];
   looking_for: string | null;
   verified: string | null;
+  is_verified: boolean;
   instagram: string | null;
 }
 
