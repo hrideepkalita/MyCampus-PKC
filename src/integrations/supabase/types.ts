@@ -43,10 +43,43 @@ export type Database = {
           },
         ]
       }
+      confession_reports: {
+        Row: {
+          confession_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          confession_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          confession_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "confession_reports_confession_id_fkey"
+            columns: ["confession_id"]
+            isOneToOne: false
+            referencedRelation: "confessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       confessions: {
         Row: {
           created_at: string
           id: string
+          is_anonymous: boolean
           tag: string
           text: string
           user_id: string
@@ -54,6 +87,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           tag?: string
           text: string
           user_id: string
@@ -61,6 +95,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_anonymous?: boolean
           tag?: string
           text?: string
           user_id?: string
@@ -148,6 +183,33 @@ export type Database = {
         }
         Relationships: []
       }
+      notices: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -197,6 +259,7 @@ export type Database = {
           phone: string | null
           photo_url: string | null
           photos: string[] | null
+          role: string | null
           updated_at: string
           verified: string | null
         }
@@ -215,6 +278,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           photos?: string[] | null
+          role?: string | null
           updated_at?: string
           verified?: string | null
         }
@@ -233,6 +297,7 @@ export type Database = {
           phone?: string | null
           photo_url?: string | null
           photos?: string[] | null
+          role?: string | null
           updated_at?: string
           verified?: string | null
         }
