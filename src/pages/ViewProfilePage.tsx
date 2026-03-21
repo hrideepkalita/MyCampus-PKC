@@ -17,6 +17,7 @@ interface Profile {
   interests: string[];
   looking_for: string | null;
   verified: string | null;
+  is_verified: boolean;
   instagram: string | null;
 }
 
@@ -36,7 +37,7 @@ const ViewProfilePage = () => {
   const fetchProfile = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, name, age, gender, branch, bio, photo_url, photos, interests, looking_for, verified, instagram")
+      .select("id, name, age, gender, branch, bio, photo_url, photos, interests, looking_for, verified, instagram, is_verified")
       .eq("id", id!)
       .maybeSingle();
     if (data) {
@@ -44,6 +45,7 @@ const ViewProfilePage = () => {
         ...data,
         photos: (data.photos as string[]) || [],
         interests: (data.interests as string[]) || [],
+        is_verified: (data as any).is_verified ?? false,
       });
     }
     setLoading(false);
@@ -101,7 +103,7 @@ const ViewProfilePage = () => {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{profile.name}</h1>
-          {profile.verified === "verified" && (
+          {profile.is_verified && (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
               <Check className="h-3 w-3" /> Verified
             </span>

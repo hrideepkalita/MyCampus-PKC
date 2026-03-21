@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
 import { toast } from "sonner";
 
+const ADMIN_EMAIL = "rangiavlog@gmail.com";
+
 interface Profile {
   name: string;
   age: number | null;
@@ -20,6 +22,7 @@ interface Profile {
   interests: string[];
   looking_for: string | null;
   verified: string | null;
+  is_verified: boolean;
   instagram: string | null;
   phone: string | null;
 }
@@ -34,12 +37,16 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const verifyInputRef = useRef<HTMLInputElement>(null);
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
     if (!user) return;
     fetchProfile();
+    fetchVerificationStatus();
   }, [user]);
 
   const fetchProfile = async () => {
@@ -61,6 +68,7 @@ const ProfilePage = () => {
         interests: (data.interests as string[]) || [],
         looking_for: data.looking_for,
         verified: data.verified,
+        is_verified: (data as any).is_verified ?? false,
         instagram: data.instagram,
         phone: data.phone,
       };
@@ -68,6 +76,19 @@ const ProfilePage = () => {
       setForm(p);
     }
     setLoading(false);
+  };
+
+  const fetchVerificationStatus = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("verification_requests")
+      .select("status")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (data && data.length > 0) {
+      setVerificationStatus(data[0].status);
+    }
   };
 
   const handleSave = async () => {
@@ -148,15 +169,21 @@ const ProfilePage = () => {
     setVerifying(true);
 
     const ext = file.name.split(".").pop();
-    const path = `${user.id}/verification_id.${ext}`;
+    const path = `${user.id}/verification_id_${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
     if (error) { toast.error("Upload failed"); setVerifying(false); return; }
 
-    await supabase.from("profiles").update({ verified: "pending" }).eq("id", user.id);
-    setProfile(prev => prev ? { ...prev, verified: "pending" } : prev);
-    setForm(prev => prev ? { ...prev, verified: "pending" } : prev);
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const imageUrl = urlData.publicUrl;
 
-    // Create notification for the user
+    await supabase.from("verification_requests").insert({
+      user_id: user.id,
+      id_card_image_url: imageUrl,
+      status: "pending",
+    });
+
+    setVerificationStatus("pending");
+
     await supabase.from("notifications").insert({
       user_id: user.id,
       type: "verification",
@@ -180,7 +207,7 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-[100dvh] items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
@@ -189,23 +216,34 @@ const ProfilePage = () => {
   const displayProfile = editing ? form : profile;
   if (!displayProfile) return null;
 
+  const showVerifyButton = !displayProfile.is_verified && verificationStatus !== "pending";
+
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
       <TopBar
         title="My Profile"
         rightContent={
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
-          >
-            <LogOut className="h-3 w-3" /> Logout
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => navigate("/admin")}
+                className="flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground transition-colors"
+              >
+                <Shield className="h-3 w-3" /> Admin
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+            >
+              <LogOut className="h-3 w-3" /> Logout
+            </button>
+          </div>
         }
       />
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
-          {/* Main profile photo */}
           <div className="relative h-24 w-24">
             <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
               <img src={displayProfile.photo_url || "/placeholder.svg"} alt={displayProfile.name} className="h-full w-full object-cover" />
@@ -224,7 +262,6 @@ const ProfilePage = () => {
             </button>
           </div>
 
-          {/* Additional photos grid */}
           <div className="mt-4 flex gap-2">
             {[0, 1, 2].map((index) => {
               const photoUrl = displayProfile.photos?.[index];
@@ -243,12 +280,7 @@ const ProfilePage = () => {
                   ) : (
                     <label className="flex h-full w-full cursor-pointer items-center justify-center">
                       <Camera className="h-5 w-5 text-muted-foreground" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handlePhotoUpload(e, displayProfile.photos?.length || 0)}
-                        className="hidden"
-                      />
+                      <input type="file" accept="image/*" onChange={(e) => handlePhotoUpload(e, displayProfile.photos?.length || 0)} className="hidden" />
                     </label>
                   )}
                 </div>
@@ -266,7 +298,7 @@ const ProfilePage = () => {
             ) : (
               <>
                 <h2 className="font-display text-xl font-bold text-foreground">{displayProfile.name}{displayProfile.age ? `, ${displayProfile.age}` : ""}</h2>
-                {displayProfile.verified === "verified" && (
+                {displayProfile.is_verified && (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
                     <Check className="h-3 w-3" /> Verified
                   </span>
@@ -354,17 +386,19 @@ const ProfilePage = () => {
             <p className="text-xs font-semibold text-muted-foreground mb-2">Verification</p>
             <div className="flex items-center gap-2 mb-3">
               <Shield className="h-4 w-4 text-accent" />
-              <span className={`text-sm font-medium capitalize ${
-                displayProfile.verified === "verified" ? "text-accent" :
-                displayProfile.verified === "pending" ? "text-yellow-600" :
+              <span className={`text-sm font-medium ${
+                displayProfile.is_verified ? "text-accent" :
+                verificationStatus === "pending" ? "text-yellow-600 dark:text-yellow-400" :
+                verificationStatus === "rejected" ? "text-destructive" :
                 "text-muted-foreground"
               }`}>
-                {displayProfile.verified === "verified" ? "✅ Verified" :
-                 displayProfile.verified === "pending" ? "⏳ Pending Verification" :
+                {displayProfile.is_verified ? "✅ Verified" :
+                 verificationStatus === "pending" ? "⏳ Pending Verification" :
+                 verificationStatus === "rejected" ? "❌ Rejected — Reapply below" :
                  "Not Verified"}
               </span>
             </div>
-            {displayProfile.verified !== "verified" && displayProfile.verified !== "pending" && (
+            {showVerifyButton && (
               <>
                 <p className="text-xs text-muted-foreground mb-2">Upload your college ID card to get verified</p>
                 <input ref={verifyInputRef} type="file" accept="image/*" className="hidden" onChange={handleVerificationUpload} />
@@ -378,11 +412,11 @@ const ProfilePage = () => {
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  {verifying ? "Uploading..." : "Verify Profile"}
+                  {verifying ? "Uploading..." : verificationStatus === "rejected" ? "Reapply for Verification" : "Verify Profile"}
                 </button>
               </>
             )}
-            {displayProfile.verified === "pending" && (
+            {verificationStatus === "pending" && !displayProfile.is_verified && (
               <p className="text-xs text-muted-foreground">Your ID is being reviewed. You'll be notified once approved.</p>
             )}
           </div>
