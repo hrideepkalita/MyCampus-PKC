@@ -53,10 +53,10 @@ const MatchesPage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
-      <TopBar title="Matches" />
+      <TopBar title="Friends" />
 
       <div className="mx-auto max-w-md px-4 pt-1">
-        <p className="text-xs text-muted-foreground mb-3">{matches.length} connections</p>
+        <p className="text-xs text-muted-foreground mb-3">{matches.length} friends</p>
       </div>
 
       <div className="mx-auto max-w-md px-4 space-y-3">
@@ -67,7 +67,7 @@ const MatchesPage = () => {
         ) : matches.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
             <span className="text-5xl">💫</span>
-            <p className="mt-4 font-display text-lg font-bold text-foreground">No matches yet</p>
+            <p className="mt-4 font-display text-lg font-bold text-foreground">No friends yet</p>
             <p className="mt-1 text-sm text-muted-foreground">Keep swiping to find your match!</p>
           </div>
         ) : (
@@ -89,7 +89,6 @@ const MatchesPage = () => {
                 </div>
               </button>
 
-              {/* Contact info expandable */}
               <button
                 onClick={(e) => { e.stopPropagation(); setSelectedId(selectedId === match.id ? null : match.id); }}
                 className="mt-1 ml-17 text-xs text-primary font-medium"
