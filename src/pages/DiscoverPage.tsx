@@ -130,9 +130,9 @@ const DiscoverPage = () => {
 
   const nextProfile = () => {
     if (currentIndex + 1 >= profiles.length) {
-      // When list ends, clear skipped and reload
+      // Circular loop — restart from beginning, clear skips
       setSkippedIds(new Set());
-      fetchProfiles();
+      setCurrentIndex(0);
     } else {
       setCurrentIndex((prev) => prev + 1);
     }
