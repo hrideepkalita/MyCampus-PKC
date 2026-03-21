@@ -103,7 +103,7 @@ const ViewProfilePage = () => {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{profile.name}</h1>
-          {profile.verified === "verified" && (
+          {profile.is_verified && (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
               <Check className="h-3 w-3" /> Verified
             </span>
