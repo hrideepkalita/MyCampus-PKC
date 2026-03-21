@@ -144,7 +144,7 @@ const DiscoverPage = () => {
     }
   };
 
-  const noMoreProfiles = !loading && (!profiles.length || currentIndex >= profiles.length);
+  const noMoreProfiles = !loading && !profiles.length;
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
