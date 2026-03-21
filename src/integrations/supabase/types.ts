@@ -191,6 +191,7 @@ export type Database = {
           id: string
           instagram: string | null
           interests: string[] | null
+          is_verified: boolean
           looking_for: string | null
           name: string
           phone: string | null
@@ -208,6 +209,7 @@ export type Database = {
           id: string
           instagram?: string | null
           interests?: string[] | null
+          is_verified?: boolean
           looking_for?: string | null
           name: string
           phone?: string | null
@@ -225,6 +227,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           interests?: string[] | null
+          is_verified?: boolean
           looking_for?: string | null
           name?: string
           phone?: string | null
@@ -232,6 +235,30 @@ export type Database = {
           photos?: string[] | null
           updated_at?: string
           verified?: string | null
+        }
+        Relationships: []
+      }
+      verification_requests: {
+        Row: {
+          created_at: string
+          id: string
+          id_card_image_url: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          id_card_image_url: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          id_card_image_url?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
