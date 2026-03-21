@@ -37,7 +37,7 @@ const ViewProfilePage = () => {
   const fetchProfile = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, name, age, gender, branch, bio, photo_url, photos, interests, looking_for, verified, instagram")
+      .select("id, name, age, gender, branch, bio, photo_url, photos, interests, looking_for, verified, instagram, is_verified")
       .eq("id", id!)
       .maybeSingle();
     if (data) {
@@ -45,6 +45,7 @@ const ViewProfilePage = () => {
         ...data,
         photos: (data.photos as string[]) || [],
         interests: (data.interests as string[]) || [],
+        is_verified: (data as any).is_verified ?? false,
       });
     }
     setLoading(false);
