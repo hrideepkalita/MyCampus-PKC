@@ -3,22 +3,30 @@ import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Plus, Heart, Flag } from "lucide-react";
+import { Flame, Plus, Heart, Flag, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+const ADMIN_EMAIL = "rangiavlog@gmail.com";
 
 interface ConfessionRow {
   id: string;
   text: string;
   tag: string;
   created_at: string;
+  is_anonymous: boolean;
+  user_id: string;
   like_count: number;
   user_liked: boolean;
+  user_reported: boolean;
+  author_name?: string;
 }
 
 const tagConfig: Record<string, { emoji: string; bg: string }> = {
-  crush: { emoji: "💘", bg: "bg-confession-pink" },
-  secret: { emoji: "🤫", bg: "bg-confession-yellow" },
-  compliment: { emoji: "💌", bg: "bg-confession-blue" },
-  "guess-who": { emoji: "👀", bg: "bg-confession-yellow" },
+  crush: { emoji: "💘", bg: "bg-[hsl(var(--confession-pink))]" },
+  secret: { emoji: "🤫", bg: "bg-[hsl(var(--confession-yellow))]" },
+  general: { emoji: "💬", bg: "bg-[hsl(var(--confession-blue))]" },
+  compliment: { emoji: "💌", bg: "bg-[hsl(var(--confession-blue))]" },
+  "guess-who": { emoji: "👀", bg: "bg-[hsl(var(--confession-yellow))]" },
 };
 
 const timeAgo = (date: string) => {
@@ -34,6 +42,7 @@ type Tab = "latest" | "trending";
 
 const ConfessionsPage = () => {
   const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
   const [tab, setTab] = useState<Tab>("latest");
   const [showCompose, setShowCompose] = useState(false);
   const [newText, setNewText] = useState("");
@@ -50,7 +59,7 @@ const ConfessionsPage = () => {
 
     const { data: rows } = await supabase
       .from("confessions")
-      .select("id, text, tag, created_at")
+      .select("id, text, tag, created_at, user_id, is_anonymous")
       .order("created_at", { ascending: false })
       .limit(100);
 
@@ -62,6 +71,24 @@ const ConfessionsPage = () => {
       .select("confession_id, user_id")
       .in("confession_id", confessionIds);
 
+    const { data: userReports } = await supabase
+      .from("confession_reports")
+      .select("confession_id")
+      .eq("user_id", user.id);
+
+    const reportedSet = new Set((userReports || []).map(r => r.confession_id));
+
+    // Fetch author names for non-anonymous
+    const nonAnonUserIds = [...new Set(rows.filter(r => !r.is_anonymous).map(r => r.user_id))];
+    let nameMap = new Map<string, string>();
+    if (nonAnonUserIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", nonAnonUserIds);
+      nameMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
+    }
+
     const likeCounts: Record<string, number> = {};
     const userLikes = new Set<string>();
     (allLikes || []).forEach(l => {
@@ -71,8 +98,11 @@ const ConfessionsPage = () => {
 
     setConfessions(rows.map(r => ({
       ...r,
+      is_anonymous: r.is_anonymous ?? true,
       like_count: likeCounts[r.id] || 0,
       user_liked: userLikes.has(r.id),
+      user_reported: reportedSet.has(r.id),
+      author_name: r.is_anonymous ? undefined : nameMap.get(r.user_id),
     })));
     setLoading(false);
   };
@@ -83,6 +113,7 @@ const ConfessionsPage = () => {
       user_id: user.id,
       text: newText.trim(),
       tag: newTag,
+      is_anonymous: true,
     });
     setShowCompose(false);
     setNewText("");
@@ -101,6 +132,28 @@ const ConfessionsPage = () => {
         ? { ...c, user_liked: !liked, like_count: liked ? c.like_count - 1 : c.like_count + 1 }
         : c
     ));
+  };
+
+  const handleReport = async (confessionId: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("confession_reports").insert({
+      user_id: user.id,
+      confession_id: confessionId,
+    });
+    if (!error) {
+      toast.success("Reported. We'll review it.");
+      setConfessions(prev => prev.map(c =>
+        c.id === confessionId ? { ...c, user_reported: true } : c
+      ));
+    } else {
+      toast.error("Already reported");
+    }
+  };
+
+  const handleDelete = async (confessionId: string) => {
+    await supabase.from("confessions").delete().eq("id", confessionId);
+    setConfessions(prev => prev.filter(c => c.id !== confessionId));
+    toast.success("Confession deleted");
   };
 
   const sorted = tab === "trending"
@@ -149,8 +202,8 @@ const ConfessionsPage = () => {
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none resize-none"
               rows={3}
             />
-            <div className="mt-2 flex items-center gap-2">
-              {["crush", "secret", "compliment", "guess-who"].map((t) => (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              {["crush", "secret", "general", "compliment", "guess-who"].map((t) => (
                 <button
                   key={t}
                   onClick={() => setNewTag(t)}
@@ -189,9 +242,14 @@ const ConfessionsPage = () => {
             return (
               <div key={confession.id} className={`rounded-2xl p-4 ${config.bg} animate-slide-up`}>
                 <div className="flex items-start justify-between">
-                  <span className="rounded-full bg-background/60 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
-                    {config.emoji} {confession.tag}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-background/60 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur-sm">
+                      {config.emoji} {confession.tag}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {confession.is_anonymous ? "Anonymous" : confession.author_name || "Unknown"}
+                    </span>
+                  </div>
                   <span className="text-[10px] text-muted-foreground">{timeAgo(confession.created_at)}</span>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-foreground">{confession.text}</p>
@@ -207,9 +265,26 @@ const ConfessionsPage = () => {
                     <Heart className="h-3.5 w-3.5" fill={confession.user_liked ? "currentColor" : "none"} />
                     {confession.like_count}
                   </button>
-                  <button className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors">
-                    <Flag className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {!confession.user_reported && (
+                      <button
+                        onClick={() => handleReport(confession.id)}
+                        className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors"
+                        title="Report"
+                      >
+                        <Flag className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDelete(confession.id)}
+                        className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

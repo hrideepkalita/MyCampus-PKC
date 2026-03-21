@@ -17,6 +17,7 @@ import LostFoundPage from "./pages/LostFoundPage";
 import SearchPage from "./pages/SearchPage";
 import ViewProfilePage from "./pages/ViewProfilePage";
 import AdminPage from "./pages/AdminPage";
+import NoticesPage from "./pages/NoticesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/lost-found" element={<ProtectedRoute><LostFoundPage /></ProtectedRoute>} />
               <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+              <Route path="/notices" element={<ProtectedRoute><NoticesPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
