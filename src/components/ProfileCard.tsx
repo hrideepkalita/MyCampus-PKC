@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import type { UserProfile } from "@/lib/mockData";
-import verificationBadge from "@/assets/Verification.jpg";
 
 interface ProfileCardProps {
   profile: UserProfile;
@@ -36,7 +36,9 @@ const ProfileCard = ({ profile, onLike, onSkip, onCardClick }: ProfileCardProps)
               {profile.name}, {profile.age}
             </h2>
             {profile.verified === "verified" && (
-              <img src={verificationBadge} alt="Verified" className="h-5 w-5 rounded-full" />
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
+                <Check className="h-3 w-3" /> Verified
+              </span>
             )}
           </div>
           <p className="mt-0.5 text-sm opacity-90">{profile.branch}</p>

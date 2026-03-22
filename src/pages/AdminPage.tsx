@@ -63,20 +63,12 @@ const AdminPage = () => {
 
   const handleAction = async (req: VerificationRequest, action: "approved" | "rejected") => {
     setProcessing(req.id);
-
-    const updates: any = { status: action };
-
-    if (action === "approved") {
-      updates.is_verified = true;
-      updates.verified = "verified";
-    }
-
-    const { error: updateError } = await supabase
+    await supabase
       .from("verification_requests")
       .update({ status: action })
       .eq("id", req.id);
 
-    if (!updateError && action === "approved") {
+    if (action === "approved") {
       await supabase
         .from("profiles")
         .update({ is_verified: true, verified: "verified" })
