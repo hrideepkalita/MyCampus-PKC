@@ -109,7 +109,7 @@ const NoticesPage = () => {
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
-      {/* Fullscreen notice */}
+      {/* Fullscreen notice */} 
       {selectedNotice && (
         <div className="fixed inset-0 z-50 flex flex-col bg-background overflow-auto">
           <div className="sticky top-0 z-10 flex items-center gap-3 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3">
@@ -134,7 +134,7 @@ const NoticesPage = () => {
       <TopBar
         title="Notices"
         rightContent={
-          canPost ? (
+          user ? (
             <button
               onClick={() => setShowCompose(!showCompose)}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
@@ -199,7 +199,7 @@ const NoticesPage = () => {
           <div className="flex flex-col items-center py-20 text-center">
             <span className="text-5xl">📢</span>
             <p className="mt-4 font-display text-lg font-bold text-foreground">No notices yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Student union notices will appear here</p>
+            <p className="mt-1 text-sm text-muted-foreground">Notices will appear here</p>
           </div>
         ) : (
           notices.map((notice) => (
