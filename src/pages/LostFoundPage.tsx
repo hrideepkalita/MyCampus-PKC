@@ -158,7 +158,7 @@ const LostFoundPage = () => {
 
       {/* Post form */}
       {showForm && (
-  <div className="fixed inset-0 z-[100] bg-background overflow-auto pt-16">
+  <div className="fixed inset-0 z-40 bg-background overflow-auto">
         <div className="mx-auto max-w-md px-4 pt-2 animate-slide-up">
           <div className="rounded-2xl bg-card p-4 space-y-3">
             <div className="flex gap-2">
