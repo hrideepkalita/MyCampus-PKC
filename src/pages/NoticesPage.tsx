@@ -136,7 +136,7 @@ const NoticesPage = () => {
         rightContent={
           user ? (
             <button
-              onClick={() => setShowCompose(!showCompose)}
+              onClick={() => setShowCompose(prev => !prev)}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
             >
               <Plus className="h-4 w-4" />
@@ -145,7 +145,7 @@ const NoticesPage = () => {
         }
       />
 
-      {showCompose && canPost && (
+      {showCompose && (
         <div className="mx-auto max-w-md px-4 pt-2 animate-slide-up">
           <div className="rounded-2xl bg-card p-4 space-y-3">
             <input
