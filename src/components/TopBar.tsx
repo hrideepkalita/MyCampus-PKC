@@ -48,10 +48,17 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate("/profile")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center justify-center"
             aria-label="My Profile"
           >
-            <User className="h-4 w-4" />
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+              {profilePhoto ? (
+                <AvatarImage src={profilePhoto} alt="Profile" />
+              ) : null}
+              <AvatarFallback className="bg-card text-muted-foreground">
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{title}</h1>
         </div>
