@@ -16,6 +16,7 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -27,7 +28,16 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
         .eq("is_read", false);
       setUnreadCount(count || 0);
     };
+    const fetchPhoto = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("photo_url")
+        .eq("id", user.id)
+        .single();
+      if (data?.photo_url) setProfilePhoto(data.photo_url);
+    };
     fetchUnread();
+    fetchPhoto();
     const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
   }, [user]);
