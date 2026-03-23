@@ -3,7 +3,7 @@ import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Flame, Plus, Heart, Flag, Trash2 } from "lucide-react";
+import { Flame, Plus, Heart, Flag, Trash2, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
@@ -18,6 +18,15 @@ interface ConfessionRow {
   like_count: number;
   user_liked: boolean;
   user_reported: boolean;
+  author_name?: string;
+}
+
+interface Reply {
+  id: string;
+  confession_id: string;
+  user_id: string;
+  reply_text: string;
+  created_at: string;
   author_name?: string;
 }
 
@@ -49,6 +58,9 @@ const ConfessionsPage = () => {
   const [newTag, setNewTag] = useState("crush");
   const [confessions, setConfessions] = useState<ConfessionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [replies, setReplies] = useState<Record<string, Reply[]>>({});
+  const [openReplies, setOpenReplies] = useState<Set<string>>(new Set());
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchConfessions();
@@ -78,7 +90,6 @@ const ConfessionsPage = () => {
 
     const reportedSet = new Set((userReports || []).map(r => r.confession_id));
 
-    // Fetch author names for non-anonymous
     const nonAnonUserIds = [...new Set(rows.filter(r => !r.is_anonymous).map(r => r.user_id))];
     let nameMap = new Map<string, string>();
     if (nonAnonUserIds.length > 0) {
@@ -105,6 +116,54 @@ const ConfessionsPage = () => {
       author_name: r.is_anonymous ? undefined : nameMap.get(r.user_id),
     })));
     setLoading(false);
+  };
+
+  const fetchReplies = async (confessionId: string) => {
+    const { data } = await supabase
+      .from("confession_replies")
+      .select("*")
+      .eq("confession_id", confessionId)
+      .order("created_at", { ascending: true })
+      .limit(50);
+
+    if (!data) return;
+
+    const userIds = [...new Set(data.map(r => r.user_id))];
+    let nameMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", userIds);
+      nameMap = new Map(profiles?.map(p => [p.id, p.name]) || []);
+    }
+
+    setReplies(prev => ({
+      ...prev,
+      [confessionId]: data.map(r => ({ ...r, author_name: nameMap.get(r.user_id) || "Anonymous" })),
+    }));
+  };
+
+  const toggleReplies = (confessionId: string) => {
+    const newSet = new Set(openReplies);
+    if (newSet.has(confessionId)) {
+      newSet.delete(confessionId);
+    } else {
+      newSet.add(confessionId);
+      if (!replies[confessionId]) fetchReplies(confessionId);
+    }
+    setOpenReplies(newSet);
+  };
+
+  const handlePostReply = async (confessionId: string) => {
+    if (!user || !replyText[confessionId]?.trim()) return;
+    await supabase.from("confession_replies").insert({
+      confession_id: confessionId,
+      user_id: user.id,
+      reply_text: replyText[confessionId].trim(),
+    });
+    setReplyText(prev => ({ ...prev, [confessionId]: "" }));
+    fetchReplies(confessionId);
   };
 
   const handlePost = async () => {
@@ -239,6 +298,8 @@ const ConfessionsPage = () => {
         ) : (
           sorted.map((confession) => {
             const config = tagConfig[confession.tag] || tagConfig.secret;
+            const confReplies = replies[confession.id] || [];
+            const isOpen = openReplies.has(confession.id);
             return (
               <div key={confession.id} className={`rounded-2xl p-4 ${config.bg} animate-slide-up`}>
                 <div className="flex items-start justify-between">
@@ -252,25 +313,36 @@ const ConfessionsPage = () => {
                   </div>
                   <span className="text-[10px] text-muted-foreground">{timeAgo(confession.created_at)}</span>
                 </div>
+                {isAdmin && confession.is_anonymous && (
+                  <p className="mt-1 text-[10px] text-destructive/70">🔒 UID: {confession.user_id.slice(0, 8)}...</p>
+                )}
                 <p className="mt-3 text-sm leading-relaxed text-foreground">{confession.text}</p>
                 <div className="mt-3 flex items-center justify-between">
-                  <button
-                    onClick={() => handleLike(confession.id, confession.user_liked)}
-                    className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all active:scale-95 ${
-                      confession.user_liked
-                        ? "bg-secondary/15 text-secondary"
-                        : "bg-background/50 text-muted-foreground"
-                    }`}
-                  >
-                    <Heart className="h-3.5 w-3.5" fill={confession.user_liked ? "currentColor" : "none"} />
-                    {confession.like_count}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleLike(confession.id, confession.user_liked)}
+                      className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all active:scale-95 ${
+                        confession.user_liked
+                          ? "bg-secondary/15 text-secondary"
+                          : "bg-background/50 text-muted-foreground"
+                      }`}
+                    >
+                      <Heart className="h-3.5 w-3.5" fill={confession.user_liked ? "currentColor" : "none"} />
+                      {confession.like_count}
+                    </button>
+                    <button
+                      onClick={() => toggleReplies(confession.id)}
+                      className="flex items-center gap-1 rounded-full bg-background/50 px-3 py-1 text-xs font-medium text-muted-foreground active:scale-95"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      {confReplies.length > 0 ? confReplies.length : "Reply"}
+                    </button>
+                  </div>
                   <div className="flex items-center gap-1">
                     {!confession.user_reported && (
                       <button
                         onClick={() => handleReport(confession.id)}
                         className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors"
-                        title="Report"
                       >
                         <Flag className="h-3.5 w-3.5" />
                       </button>
@@ -279,13 +351,42 @@ const ConfessionsPage = () => {
                       <button
                         onClick={() => handleDelete(confession.id)}
                         className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors"
-                        title="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
+
+                {/* Replies section */}
+                {isOpen && (
+                  <div className="mt-3 space-y-2 border-t border-border/30 pt-3">
+                    {confReplies.map((r) => (
+                      <div key={r.id} className="rounded-xl bg-background/40 px-3 py-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-semibold text-foreground">{r.author_name}</span>
+                          <span className="text-[9px] text-muted-foreground">{timeAgo(r.created_at)}</span>
+                        </div>
+                        <p className="mt-0.5 text-xs text-foreground">{r.reply_text}</p>
+                      </div>
+                    ))}
+                    <div className="flex gap-2">
+                      <input
+                        value={replyText[confession.id] || ""}
+                        onChange={(e) => setReplyText(prev => ({ ...prev, [confession.id]: e.target.value }))}
+                        placeholder="Write a reply..."
+                        className="flex-1 rounded-xl border border-border/50 bg-background/60 px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
+                        onKeyDown={(e) => e.key === "Enter" && handlePostReply(confession.id)}
+                      />
+                      <button
+                        onClick={() => handlePostReply(confession.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })
