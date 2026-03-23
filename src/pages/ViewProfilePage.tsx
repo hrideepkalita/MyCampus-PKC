@@ -188,10 +188,13 @@ const ViewProfilePage = () => {
         {user?.id !== profile.id && (
           <button
             onClick={handleLike}
-            className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-pink py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+            disabled={hasLiked}
+            className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] ${
+              hasLiked ? "opacity-70" : ""
+            }`}
             style={{ backgroundColor: "hsl(var(--pink))" }}
           >
-            <Heart className="h-5 w-5" /> Like {profile.name}
+            <Heart className="h-5 w-5" /> {hasLiked ? "Liked ✓" : `Like ${profile.name}`}
           </button>
         )}
       </div>
