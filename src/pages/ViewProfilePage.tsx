@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Instagram, Heart } from "lucide-react";
+import { ArrowLeft, Instagram, Heart } from "lucide-react";
+import verifiedBadge from "@/assets/verified-badge.png";
 
 interface Profile {
   id: string;
@@ -104,9 +105,7 @@ const ViewProfilePage = () => {
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{profile.name}</h1>
           {profile.is_verified && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
-              <Check className="h-3 w-3" /> Verified
-            </span>
+            <img src={verifiedBadge} alt="Verified" className="h-5 w-5" />
           )}
         </div>
       </div>
