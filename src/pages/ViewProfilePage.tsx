@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, Instagram, Heart } from "lucide-react";
+import { ArrowLeft, Instagram, Heart } from "lucide-react";
+import verifiedBadge from "@/assets/verified-badge.png";
 
 interface Profile {
   id: string;
