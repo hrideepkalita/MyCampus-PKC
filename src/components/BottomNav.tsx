@@ -1,4 +1,4 @@
-import { Home, Users, Megaphone, MessageCircle, User } from "lucide-react";
+import { Home, Users, Megaphone, MessageCircle, User, search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
