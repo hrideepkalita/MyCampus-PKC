@@ -131,7 +131,7 @@ const LostFoundPage = () => {
         title="Lost & Found"
         rightContent={
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => setShowForm(prev => !prev)}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
           >
             <Plus className="h-4 w-4" />
@@ -158,6 +158,7 @@ const LostFoundPage = () => {
 
       {/* Post form */}
       {showForm && (
+  <div className="fixed inset-0 z-40 bg-background overflow-auto">
         <div className="mx-auto max-w-md px-4 pt-2 animate-slide-up">
           <div className="rounded-2xl bg-card p-4 space-y-3">
             <div className="flex gap-2">
