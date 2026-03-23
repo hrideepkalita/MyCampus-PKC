@@ -46,7 +46,7 @@ const MatchesPage = () => {
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, name, branch, photo_url, instagram, phone")
+      .select("id, name, branch, photo_url, instagram, phone, is_verified")
       .in("id", otherIds);
 
     setMatches((profiles as MatchProfile[]) || []);
