@@ -63,16 +63,31 @@ const AdminPage = () => {
 
   const handleAction = async (req: VerificationRequest, action: "approved" | "rejected") => {
     setProcessing(req.id);
-    await supabase
+    
+    // Update verification request status
+    const { error: reqError } = await supabase
       .from("verification_requests")
       .update({ status: action })
       .eq("id", req.id);
+    
+    if (reqError) {
+      toast.error("Failed to update request: " + reqError.message);
+      setProcessing(null);
+      return;
+    }
 
     if (action === "approved") {
-      await supabase
+      // Update profile verified status - both columns
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({ is_verified: true, verified: "verified" })
         .eq("id", req.user_id);
+      
+      if (profileError) {
+        toast.error("Failed to update profile: " + profileError.message);
+        setProcessing(null);
+        return;
+      }
     }
 
     await supabase.from("notifications").insert({

@@ -84,7 +84,12 @@ const MatchesPage = () => {
                     <img src={match.photo_url || "/placeholder.svg"} alt={match.name} className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-display text-sm font-bold text-foreground">{match.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-display text-sm font-bold text-foreground">{match.name}</p>
+                      {match.is_verified && (
+                        <img src={verifiedBadge} alt="Verified" className="h-4 w-4" />
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">{match.branch || "No branch"}</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
