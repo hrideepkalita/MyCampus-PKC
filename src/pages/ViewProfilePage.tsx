@@ -52,21 +52,37 @@ const ViewProfilePage = () => {
     setLoading(false);
   };
 
+  const [hasLiked, setHasLiked] = useState(false);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    const checkLiked = async () => {
+      const { data } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("from_user_id", user.id)
+        .eq("to_user_id", id)
+        .eq("is_like", true)
+        .maybeSingle();
+      setHasLiked(!!data);
+    };
+    checkLiked();
+  }, [user, id]);
+
   const handleLike = async () => {
-    if (!user || !profile) return;
+    if (!user || !profile || hasLiked) return;
     await supabase.from("likes").insert({
       from_user_id: user.id,
       to_user_id: profile.id,
       is_like: true,
     });
-    // Create notification
     await supabase.from("notifications").insert({
       user_id: profile.id,
       type: "like",
       title: "Someone liked you!",
       message: "A student liked your profile 💕",
     });
-    navigate(-1);
+    setHasLiked(true);
   };
 
   if (loading) {
@@ -172,10 +188,13 @@ const ViewProfilePage = () => {
         {user?.id !== profile.id && (
           <button
             onClick={handleLike}
-            className="mt-6 w-full flex items-center justify-center gap-2 rounded-xl bg-pink py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98]"
+            disabled={hasLiked}
+            className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] ${
+              hasLiked ? "opacity-70" : ""
+            }`}
             style={{ backgroundColor: "hsl(var(--pink))" }}
           >
-            <Heart className="h-5 w-5" /> Like {profile.name}
+            <Heart className="h-5 w-5" /> {hasLiked ? "Liked ✓" : `Like ${profile.name}`}
           </button>
         )}
       </div>

@@ -2,8 +2,9 @@ import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Search, Check } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import verifiedBadge from "@/assets/verified-badge.png";
 
 interface SearchProfile {
   id: string;
@@ -12,7 +13,7 @@ interface SearchProfile {
   branch: string | null;
   photo_url: string | null;
   interests: string[];
-  verified: string | null;
+  is_verified: boolean;
 }
 
 const SearchPage = () => {
@@ -32,14 +33,14 @@ const SearchPage = () => {
 
     const { data: nameResults } = await supabase
       .from("profiles")
-      .select("id, name, age, branch, photo_url, interests, verified")
+      .select("id, name, age, branch, photo_url, interests, is_verified")
       .neq("id", user.id)
       .ilike("name", `%${searchTerm}%`)
       .limit(20);
 
     const { data: interestResults } = await supabase
       .from("profiles")
-      .select("id, name, age, branch, photo_url, interests, verified")
+      .select("id, name, age, branch, photo_url, interests, is_verified")
       .neq("id", user.id)
       .contains("interests", [searchTerm])
       .limit(20);
@@ -108,10 +109,8 @@ const SearchPage = () => {
                 <div className="flex items-center gap-1.5">
                   <p className="font-display text-sm font-bold text-foreground truncate">{profile.name}</p>
                   {profile.age && <span className="text-xs text-muted-foreground">{profile.age}</span>}
-                  {profile.verified === "verified" && (
-                    <span className="inline-flex items-center rounded-full bg-accent/10 px-1.5 py-0.5 text-[9px] font-semibold text-accent">
-                      <Check className="h-2.5 w-2.5 mr-0.5" />✓
-                    </span>
+                  {profile.is_verified && (
+                    <img src={verifiedBadge} alt="Verified" className="h-4 w-4" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground truncate">{profile.branch || "No branch"}</p>

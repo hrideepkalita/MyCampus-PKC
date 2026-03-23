@@ -20,6 +20,7 @@ interface Profile {
   interests: string[];
   looking_for: string | null;
   verified: string | null;
+  is_verified: boolean;
   instagram: string | null;
   phone: string | null;
 }
@@ -206,7 +207,7 @@ const DiscoverPage = () => {
                   photo: profile.photo_url || "/placeholder.svg",
                   interests: profile.interests as any[],
                   lookingFor: (profile.looking_for as any) || "Not sure 🤷",
-                  verified: (profile.verified as any) || "unverified",
+                  verified: profile.is_verified ? "verified" : (profile.verified as any) || "unverified",
                   instagram: profile.instagram || undefined,
                   phone: profile.phone || undefined,
                 }}

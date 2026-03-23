@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface TopBarProps {
   title: string;
@@ -15,6 +16,7 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -26,7 +28,16 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
         .eq("is_read", false);
       setUnreadCount(count || 0);
     };
+    const fetchPhoto = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("photo_url")
+        .eq("id", user.id)
+        .single();
+      if (data?.photo_url) setProfilePhoto(data.photo_url);
+    };
     fetchUnread();
+    fetchPhoto();
     const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
   }, [user]);
@@ -37,10 +48,17 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate("/profile")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center justify-center"
             aria-label="My Profile"
           >
-            <User className="h-4 w-4" />
+            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+              {profilePhoto ? (
+                <AvatarImage src={profilePhoto} alt="Profile" />
+              ) : null}
+              <AvatarFallback className="bg-card text-muted-foreground">
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{title}</h1>
         </div>

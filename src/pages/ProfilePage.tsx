@@ -48,6 +48,10 @@ const ProfilePage = () => {
     if (!user) return;
     fetchProfile();
     fetchVerificationStatus();
+    // Re-fetch when page gains focus (e.g. after admin approval)
+    const handleFocus = () => { fetchProfile(); fetchVerificationStatus(); };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [user]);
 
   const fetchProfile = async () => {
