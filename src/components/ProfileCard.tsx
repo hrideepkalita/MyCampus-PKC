@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
 import type { UserProfile } from "@/lib/mockData";
+import verifiedBadge from "@/assets/verified-badge.png";
 
 interface ProfileCardProps {
   profile: UserProfile;
