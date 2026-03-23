@@ -1,4 +1,4 @@
-import { Home, Users, Megaphone, MessageCircle, search, user } from "lucide-react";
+import { Home, Users, Megaphone, MessageCircle, Search, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
@@ -24,7 +24,7 @@ const BottomNav = () => {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 transition-colors ${
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 transition-colors flex-shrink-0 ${
                 active ? "text-primary" : "text-muted-foreground"
               }`}
             >
