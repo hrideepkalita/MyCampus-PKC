@@ -2,8 +2,9 @@ import { useState } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Search, Check } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import verifiedBadge from "@/assets/verified-badge.png";
 
 interface SearchProfile {
   id: string;
@@ -12,7 +13,7 @@ interface SearchProfile {
   branch: string | null;
   photo_url: string | null;
   interests: string[];
-  verified: string | null;
+  is_verified: boolean;
 }
 
 const SearchPage = () => {
