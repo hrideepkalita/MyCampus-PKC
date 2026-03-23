@@ -300,9 +300,7 @@ const ProfilePage = () => {
               <>
                 <h2 className="font-display text-xl font-bold text-foreground">{displayProfile.name}{displayProfile.age ? `, ${displayProfile.age}` : ""}</h2>
                 {displayProfile.is_verified && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-accent-foreground">
-                    <Check className="h-3 w-3" /> Verified
-                  </span>
+                  <img src={verifiedBadge} alt="Verified" className="h-5 w-5" />
                 )}
               </>
             )}
