@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Instagram, Phone, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import verifiedBadge from "@/assets/verified-badge.png";
 
 interface MatchProfile {
   id: string;
@@ -13,6 +14,7 @@ interface MatchProfile {
   photo_url: string | null;
   instagram: string | null;
   phone: string | null;
+  is_verified: boolean;
 }
 
 const MatchesPage = () => {
