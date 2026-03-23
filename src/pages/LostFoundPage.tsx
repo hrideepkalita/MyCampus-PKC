@@ -212,6 +212,7 @@ const LostFoundPage = () => {
             >
               {posting ? "Posting..." : "Post"}
             </button>
+            </div>
           </div>
         </div>
       )}

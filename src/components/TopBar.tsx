@@ -1,4 +1,4 @@
-import { Bell, Search, Sun, Moon } from "lucide-react";
+import { Bell, Search, Sun, Moon, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +34,16 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
   return (
     <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
-        <h1 className="font-display text-lg font-bold text-foreground">{title}</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/profile")}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="My Profile"
+          >
+            <User className="h-4 w-4" />
+          </button>
+          <h1 className="font-display text-lg font-bold text-foreground">{title}</h1>
+        </div>
         <div className="flex items-center gap-2">
           {rightContent}
           <button

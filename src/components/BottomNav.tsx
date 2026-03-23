@@ -1,4 +1,4 @@
-import { Home, Users, Megaphone, MessageCircle, Search, User } from "lucide-react";
+import { Home, Users, Megaphone, MessageCircle, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
@@ -7,7 +7,6 @@ const navItems = [
   { icon: Megaphone, label: "Notices", path: "/notices" },
   { icon: MessageCircle, label: "Confess", path: "/confessions" },
   { icon: Search, label: "Lost", path: "/lost-found" },
-  { icon: User, label: "Profile", path: "/profile" },
 ];
 
 const BottomNav = () => {
@@ -16,8 +15,7 @@ const BottomNav = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-md safe-area-bottom">
-  
-      <div className="mx-auto flex max-w-md items-center gap-4 overflow-x-auto px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] scrollbar-hide">
+      <div className="mx-auto flex max-w-md items-center justify-around px-2 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {navItems.map(({ icon: Icon, label, path }) => {
           const active = location.pathname === path;
           return (
