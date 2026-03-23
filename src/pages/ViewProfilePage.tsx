@@ -52,21 +52,37 @@ const ViewProfilePage = () => {
     setLoading(false);
   };
 
+  const [hasLiked, setHasLiked] = useState(false);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    const checkLiked = async () => {
+      const { data } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("from_user_id", user.id)
+        .eq("to_user_id", id)
+        .eq("is_like", true)
+        .maybeSingle();
+      setHasLiked(!!data);
+    };
+    checkLiked();
+  }, [user, id]);
+
   const handleLike = async () => {
-    if (!user || !profile) return;
+    if (!user || !profile || hasLiked) return;
     await supabase.from("likes").insert({
       from_user_id: user.id,
       to_user_id: profile.id,
       is_like: true,
     });
-    // Create notification
     await supabase.from("notifications").insert({
       user_id: profile.id,
       type: "like",
       title: "Someone liked you!",
       message: "A student liked your profile 💕",
     });
-    navigate(-1);
+    setHasLiked(true);
   };
 
   if (loading) {
