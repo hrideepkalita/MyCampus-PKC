@@ -43,6 +43,38 @@ export type Database = {
           },
         ]
       }
+      confession_replies: {
+        Row: {
+          confession_id: string
+          created_at: string
+          id: string
+          reply_text: string
+          user_id: string
+        }
+        Insert: {
+          confession_id: string
+          created_at?: string
+          id?: string
+          reply_text: string
+          user_id: string
+        }
+        Update: {
+          confession_id?: string
+          created_at?: string
+          id?: string
+          reply_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "confession_replies_confession_id_fkey"
+            columns: ["confession_id"]
+            isOneToOne: false
+            referencedRelation: "confessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       confession_reports: {
         Row: {
           confession_id: string
