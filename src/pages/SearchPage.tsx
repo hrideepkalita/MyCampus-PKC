@@ -33,14 +33,14 @@ const SearchPage = () => {
 
     const { data: nameResults } = await supabase
       .from("profiles")
-      .select("id, name, age, branch, photo_url, interests, verified")
+      .select("id, name, age, branch, photo_url, interests, is_verified")
       .neq("id", user.id)
       .ilike("name", `%${searchTerm}%`)
       .limit(20);
 
     const { data: interestResults } = await supabase
       .from("profiles")
-      .select("id, name, age, branch, photo_url, interests, verified")
+      .select("id, name, age, branch, photo_url, interests, is_verified")
       .neq("id", user.id)
       .contains("interests", [searchTerm])
       .limit(20);
