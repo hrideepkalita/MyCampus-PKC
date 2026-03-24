@@ -28,7 +28,7 @@ const ProfileCard = ({ profile, onLike, onSkip, onCardClick }: ProfileCardProps)
           alt={profile.name}
           className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
         <div className="absolute bottom-0 left-0 right-0 p-4 text-primary-foreground">
           <div className="flex items-center gap-2">
