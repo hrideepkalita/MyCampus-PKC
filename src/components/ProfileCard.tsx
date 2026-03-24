@@ -53,7 +53,7 @@ const ProfileCard = ({ profile, onLike, onSkip, onCardClick }: ProfileCardProps)
             ))}
           </div>
 
-          <p className="mt-2 text-xs opacity-70">{profile.lookingFor}</p>
+          <p className="mt-2 text-xs text-white/70 drop-shadow">{profile.lookingFor}</p>
         </div>
       </div>
 
