@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Instagram, Heart } from "lucide-react";
+import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck } from "lucide-react";
 import verifiedBadge from "@/assets/verified-badge.png";
 
 interface Profile {
@@ -29,11 +29,24 @@ const ViewProfilePage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [mutualText, setMutualText] = useState("");
 
   useEffect(() => {
     if (!id) return;
     fetchProfile();
   }, [id]);
+
+  useEffect(() => {
+    if (!user || !id) return;
+    checkLiked();
+    checkFollowing();
+    fetchFollowCounts();
+    fetchMutuals();
+  }, [user, id]);
 
   const fetchProfile = async () => {
     const { data } = await supabase
@@ -52,22 +65,74 @@ const ViewProfilePage = () => {
     setLoading(false);
   };
 
-  const [hasLiked, setHasLiked] = useState(false);
+  const checkLiked = async () => {
+    const { data } = await supabase
+      .from("likes")
+      .select("id")
+      .eq("from_user_id", user!.id)
+      .eq("to_user_id", id!)
+      .eq("is_like", true)
+      .maybeSingle();
+    setHasLiked(!!data);
+  };
 
-  useEffect(() => {
-    if (!user || !id) return;
-    const checkLiked = async () => {
-      const { data } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("from_user_id", user.id)
-        .eq("to_user_id", id)
-        .eq("is_like", true)
-        .maybeSingle();
-      setHasLiked(!!data);
-    };
-    checkLiked();
-  }, [user, id]);
+  const checkFollowing = async () => {
+    const { data } = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", user!.id)
+      .eq("following_id", id!)
+      .maybeSingle();
+    setIsFollowing(!!data);
+  };
+
+  const fetchFollowCounts = async () => {
+    const [{ count: followers }, { count: following }] = await Promise.all([
+      supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", id!),
+      supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", id!),
+    ]);
+    setFollowersCount(followers || 0);
+    setFollowingCount(following || 0);
+  };
+
+  const fetchMutuals = async () => {
+    if (!user || !id || user.id === id) return;
+    // A = users current_user follows
+    const { data: myFollowing } = await supabase
+      .from("follows")
+      .select("following_id")
+      .eq("follower_id", user.id);
+    // B = users who follow profile_user
+    const { data: theirFollowers } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .eq("following_id", id);
+
+    const mySet = new Set((myFollowing || []).map(f => f.following_id));
+    const mutualIds = (theirFollowers || [])
+      .map(f => f.follower_id)
+      .filter(fid => mySet.has(fid) && fid !== user.id);
+
+    if (mutualIds.length === 0) { setMutualText(""); return; }
+
+    const { data: mutualProfiles } = await supabase
+      .from("profiles")
+      .select("name")
+      .in("id", mutualIds.slice(0, 2));
+
+    const names = (mutualProfiles || []).map(p => p.name);
+    const remaining = mutualIds.length - names.length;
+
+    if (names.length === 1 && remaining === 0) {
+      setMutualText(`Followed by ${names[0]}`);
+    } else if (names.length === 1 && remaining > 0) {
+      setMutualText(`Followed by ${names[0]} and ${remaining} other${remaining > 1 ? "s" : ""}`);
+    } else if (names.length >= 2 && remaining === 0) {
+      setMutualText(`Followed by ${names[0]} and ${names[1]}`);
+    } else {
+      setMutualText(`Followed by ${names[0]}, ${names[1]} and ${remaining} other${remaining > 1 ? "s" : ""}`);
+    }
+  };
 
   const handleLike = async () => {
     if (!user || !profile || hasLiked) return;
@@ -83,6 +148,19 @@ const ViewProfilePage = () => {
       message: "A student liked your profile 💕",
     });
     setHasLiked(true);
+  };
+
+  const handleFollowToggle = async () => {
+    if (!user || !profile) return;
+    if (isFollowing) {
+      await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", profile.id);
+      setIsFollowing(false);
+      setFollowersCount(c => c - 1);
+    } else {
+      await supabase.from("follows").insert({ follower_id: user.id, following_id: profile.id });
+      setIsFollowing(true);
+      setFollowersCount(c => c + 1);
+    }
   };
 
   if (loading) {
@@ -102,7 +180,7 @@ const ViewProfilePage = () => {
     );
   }
 
-  const allPhotos = [profile.photo_url, ...profile.photos].filter(Boolean) as string[];
+  const isOwnProfile = user?.id === profile.id;
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
@@ -121,21 +199,54 @@ const ViewProfilePage = () => {
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{profile.name}</h1>
           {profile.is_verified && (
-            <img src={verifiedBadge} alt="Verified" className="h-5 w-5" />
+            <img src={verifiedBadge} alt="Verified" className="h-[25px] w-[25px]" />
           )}
         </div>
       </div>
 
       <div className="mx-auto max-w-md px-4 pt-4">
-        {/* Main photo */}
+        {/* Main photo with dark gradient */}
         <div className="relative aspect-[3/4] max-h-[55vh] w-full overflow-hidden rounded-2xl" onClick={() => profile.photo_url && setSelectedPhoto(profile.photo_url)}>
           <img src={profile.photo_url || "/placeholder.svg"} alt={profile.name} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-primary-foreground">
-            <h2 className="font-display text-2xl font-bold">{profile.name}{profile.age ? `, ${profile.age}` : ""}</h2>
-            <p className="text-sm opacity-90">{profile.branch || "No branch"}</p>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+            <h2 className="font-display text-2xl font-bold text-white drop-shadow-lg">{profile.name}{profile.age ? `, ${profile.age}` : ""}</h2>
+            <p className="text-sm text-white/90 drop-shadow">{profile.branch || "No branch"}</p>
           </div>
         </div>
+
+        {/* Follow counts */}
+        <div className="mt-3 flex items-center justify-center gap-6">
+          <div className="text-center">
+            <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </div>
+          <div className="h-8 w-px bg-border" />
+          <div className="text-center">
+            <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+            <p className="text-xs text-muted-foreground">Following</p>
+          </div>
+        </div>
+
+        {/* Mutual text */}
+        {mutualText && (
+          <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>
+        )}
+
+        {/* Follow button (other users only) */}
+        {!isOwnProfile && (
+          <button
+            onClick={handleFollowToggle}
+            className={`mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
+              isFollowing
+                ? "bg-muted text-muted-foreground"
+                : "bg-primary text-primary-foreground"
+            }`}
+          >
+            {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+            {isFollowing ? "Following" : "Follow"}
+          </button>
+        )}
 
         {/* Additional photos */}
         {profile.photos.length > 0 && (
@@ -185,11 +296,11 @@ const ViewProfilePage = () => {
         )}
 
         {/* Like button (only for other users) */}
-        {user?.id !== profile.id && (
+        {!isOwnProfile && (
           <button
             onClick={handleLike}
             disabled={hasLiked}
-            className={`mt-6 w-full flex items-center justify-center gap-2 rounded-xl py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] ${
+            className={`mt-4 w-full flex items-center justify-center gap-2 rounded-xl py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] ${
               hasLiked ? "opacity-70" : ""
             }`}
             style={{ backgroundColor: "hsl(var(--pink))" }}
