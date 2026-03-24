@@ -46,7 +46,7 @@ const ProfileCard = ({ profile, onLike, onSkip, onCardClick }: ProfileCardProps)
             {profile.interests.map((interest) => (
               <span
                 key={interest}
-                className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[10px] font-medium text-primary-foreground backdrop-blur-sm"
+                className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm"
               >
                 {interest}
               </span>
