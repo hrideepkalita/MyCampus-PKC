@@ -99,12 +99,20 @@ const DiscoverPage = () => {
     });
 
     if (!error) {
-      // Send notification
+      // Fetch current user's name for notification
+      const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+      const myName = myProfile?.name || "Someone";
+      // Send notification with related_id for click-to-redirect
       await supabase.from("notifications").insert({
         user_id: profile.id,
         type: "like",
-        title: "Someone liked you!",
-        message: "A student liked your profile 💕",
+        title: `${myName} liked your profile!`,
+        message: `${myName} liked your profile 💕`,
+        related_id: user.id,
       });
 
       const { data: match } = await supabase

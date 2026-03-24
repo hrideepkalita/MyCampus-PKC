@@ -6,7 +6,7 @@ const navItems = [
   { icon: Users, label: "Friends", path: "/matches" },
   { icon: Megaphone, label: "Notices", path: "/notices" },
   { icon: MessageCircle, label: "Confess", path: "/confessions" },
-  { icon: Search, label: "Lost", path: "/lost-found" },
+  { icon: Search, label: "Lost & Found", path: "/lost-found" },
 ];
 
 const BottomNav = () => {
