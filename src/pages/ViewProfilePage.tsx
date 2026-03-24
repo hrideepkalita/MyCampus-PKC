@@ -31,6 +31,7 @@ const ViewProfilePage = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [hasLiked, setHasLiked] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [theyFollowMe, setTheyFollowMe] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [mutualText, setMutualText] = useState("");
@@ -44,6 +45,7 @@ const ViewProfilePage = () => {
     if (!user || !id) return;
     checkLiked();
     checkFollowing();
+    checkTheyFollowMe();
     fetchFollowCounts();
     fetchMutuals();
   }, [user, id]);
@@ -86,6 +88,16 @@ const ViewProfilePage = () => {
     setIsFollowing(!!data);
   };
 
+  const checkTheyFollowMe = async () => {
+    const { data } = await supabase
+      .from("follows")
+      .select("id")
+      .eq("follower_id", id!)
+      .eq("following_id", user!.id)
+      .maybeSingle();
+    setTheyFollowMe(!!data);
+  };
+
   const fetchFollowCounts = async () => {
     const [{ count: followers }, { count: following }] = await Promise.all([
       supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", id!),
@@ -97,12 +109,10 @@ const ViewProfilePage = () => {
 
   const fetchMutuals = async () => {
     if (!user || !id || user.id === id) return;
-    // A = users current_user follows
     const { data: myFollowing } = await supabase
       .from("follows")
       .select("following_id")
       .eq("follower_id", user.id);
-    // B = users who follow profile_user
     const { data: theirFollowers } = await supabase
       .from("follows")
       .select("follower_id")
@@ -141,11 +151,19 @@ const ViewProfilePage = () => {
       to_user_id: profile.id,
       is_like: true,
     });
+    // Fetch current user's name for notification
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", user.id)
+      .single();
+    const myName = myProfile?.name || "Someone";
     await supabase.from("notifications").insert({
       user_id: profile.id,
       type: "like",
-      title: "Someone liked you!",
-      message: "A student liked your profile 💕",
+      title: `${myName} liked your profile!`,
+      message: `${myName} liked your profile 💕`,
+      related_id: user.id,
     });
     setHasLiked(true);
   };
@@ -160,7 +178,28 @@ const ViewProfilePage = () => {
       await supabase.from("follows").insert({ follower_id: user.id, following_id: profile.id });
       setIsFollowing(true);
       setFollowersCount(c => c + 1);
+      // Send follow notification
+      const { data: myProfile } = await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+      const myName = myProfile?.name || "Someone";
+      await supabase.from("notifications").insert({
+        user_id: profile.id,
+        type: "follow",
+        title: `${myName} followed you!`,
+        message: `${myName} started following you 👋`,
+        related_id: user.id,
+      });
     }
+  };
+
+  // Determine follow button label
+  const getFollowLabel = () => {
+    if (isFollowing) return "Following";
+    if (theyFollowMe) return "Follow Back";
+    return "Follow";
   };
 
   if (loading) {
@@ -199,7 +238,7 @@ const ViewProfilePage = () => {
           </button>
           <h1 className="font-display text-lg font-bold text-foreground">{profile.name}</h1>
           {profile.is_verified && (
-            <img src={verifiedBadge} alt="Verified" className="h-[25px] w-[25px]" />
+            <img src={verifiedBadge} alt="Verified" className="h-[25px] w-[25px] object-contain" />
           )}
         </div>
       </div>
@@ -244,7 +283,7 @@ const ViewProfilePage = () => {
             }`}
           >
             {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-            {isFollowing ? "Following" : "Follow"}
+            {getFollowLabel()}
           </button>
         )}
 

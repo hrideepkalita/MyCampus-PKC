@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bell, Heart, Users, Shield, Search as SearchIcon, MessageCircle, Check } from "lucide-react";
+import { ArrowLeft, Bell, Heart, Users, Shield, Search as SearchIcon, MessageCircle, Check, UserPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Notification {
@@ -12,11 +12,13 @@ interface Notification {
   message: string;
   is_read: boolean;
   created_at: string;
+  related_id: string | null;
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
   like: <Heart className="h-4 w-4 text-pink-500" />,
   match: <Users className="h-4 w-4 text-primary" />,
+  follow: <UserPlus className="h-4 w-4 text-primary" />,
   verification: <Shield className="h-4 w-4 text-accent" />,
   lost_found: <SearchIcon className="h-4 w-4 text-muted-foreground" />,
   confession: <MessageCircle className="h-4 w-4 text-secondary" />,
@@ -55,11 +57,18 @@ const NotificationsPage = () => {
     setLoading(false);
   };
 
-  const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-    );
+  const handleNotificationClick = async (notif: Notification) => {
+    // Mark as read
+    if (!notif.is_read) {
+      await supabase.from("notifications").update({ is_read: true }).eq("id", notif.id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
+      );
+    }
+    // Redirect to sender profile if related_id exists
+    if (notif.related_id && (notif.type === "like" || notif.type === "follow" || notif.type === "match")) {
+      navigate(`/profile/${notif.related_id}`);
+    }
   };
 
   const markAllRead = async () => {
@@ -106,7 +115,7 @@ const NotificationsPage = () => {
           notifications.map((notif) => (
             <button
               key={notif.id}
-              onClick={() => markAsRead(notif.id)}
+              onClick={() => handleNotificationClick(notif)}
               className={`w-full text-left rounded-2xl p-4 transition-all ${
                 notif.is_read ? "bg-card" : "bg-primary/5 border border-primary/10"
               }`}
