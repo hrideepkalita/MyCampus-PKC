@@ -30,17 +30,17 @@ const ProfileCard = ({ profile, onLike, onSkip, onCardClick }: ProfileCardProps)
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-primary-foreground">
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
           <div className="flex items-center gap-2">
-            <h2 className="font-display text-xl font-bold">
+            <h2 className="font-display text-xl font-bold text-white drop-shadow-lg">
               {profile.name}, {profile.age}
             </h2>
             {profile.verified === "verified" && (
-              <img src={verifiedBadge} alt="Verified" className="h-5 w-5" />
+              <img src={verifiedBadge} alt="Verified" className="h-[25px] w-[25px]" />
             )}
           </div>
-          <p className="mt-0.5 text-sm opacity-90">{profile.branch}</p>
-          <p className="mt-1 text-sm opacity-80">{profile.bio}</p>
+          <p className="mt-0.5 text-sm text-white/90 drop-shadow">{profile.branch}</p>
+          <p className="mt-1 text-sm text-white/80 drop-shadow">{profile.bio}</p>
 
           <div className="mt-2 flex flex-wrap gap-1.5">
             {profile.interests.map((interest) => (
