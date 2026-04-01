@@ -226,12 +226,6 @@ const DiscoverPage = () => {
           </AnimatePresence>
         )}
 
-        {likesLeft <= 0 && (
-          <div className="mt-4 rounded-2xl bg-card p-4 text-center">
-            <p className="font-display text-sm font-bold text-foreground">Daily limit reached! 🕐</p>
-            <p className="mt-1 text-xs text-muted-foreground">Come back tomorrow for more likes</p>
-          </div>
-        )}
       </div>
 
       <MatchPopup
