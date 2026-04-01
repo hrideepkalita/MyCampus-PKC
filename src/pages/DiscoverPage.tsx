@@ -89,8 +89,7 @@ const DiscoverPage = () => {
   const profile = profiles[currentIndex];
 
   const handleLike = async () => {
-    if (!user || !profile || likesLeft <= 0) return;
-    setLikesLeft((p) => p - 1);
+    if (!user || !profile) return;
 
     const { error } = await supabase.from("likes").insert({
       from_user_id: user.id,
