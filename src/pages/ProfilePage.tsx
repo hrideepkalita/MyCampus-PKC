@@ -368,9 +368,15 @@ const ProfilePage = () => {
             ) : (
               <>
                 {displayProfile.instagram && (
-                  <div className="flex items-center gap-2 text-sm text-foreground">
+                  <button
+                    onClick={() => {
+                      const handle = displayProfile.instagram!.replace(/^@/, "");
+                      window.open(`https://instagram.com/${handle}`, "_blank");
+                    }}
+                    className="flex items-center gap-2 text-sm text-primary font-medium"
+                  >
                     <Instagram className="h-4 w-4 text-secondary" /> {displayProfile.instagram}
-                  </div>
+                  </button>
                 )}
                 {displayProfile.phone && (
                   <div className="mt-1 flex items-center gap-2 text-sm text-foreground">
