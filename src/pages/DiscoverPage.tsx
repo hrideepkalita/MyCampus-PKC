@@ -34,7 +34,7 @@ const DiscoverPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
-  const [likesLeft, setLikesLeft] = useState(10);
+  // Unlimited likes - no limit tracking needed
   const [loading, setLoading] = useState(true);
   const [genderFilter, setGenderFilter] = useState<string>("All");
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
@@ -89,8 +89,7 @@ const DiscoverPage = () => {
   const profile = profiles[currentIndex];
 
   const handleLike = async () => {
-    if (!user || !profile || likesLeft <= 0) return;
-    setLikesLeft((p) => p - 1);
+    if (!user || !profile) return;
 
     const { error } = await supabase.from("likes").insert({
       from_user_id: user.id,
@@ -162,7 +161,7 @@ const DiscoverPage = () => {
         rightContent={
           <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            {likesLeft} left
+            Unlimited
           </span>
         }
       />
@@ -227,12 +226,6 @@ const DiscoverPage = () => {
           </AnimatePresence>
         )}
 
-        {likesLeft <= 0 && (
-          <div className="mt-4 rounded-2xl bg-card p-4 text-center">
-            <p className="font-display text-sm font-bold text-foreground">Daily limit reached! 🕐</p>
-            <p className="mt-1 text-xs text-muted-foreground">Come back tomorrow for more likes</p>
-          </div>
-        )}
       </div>
 
       <MatchPopup
