@@ -161,7 +161,7 @@ const DiscoverPage = () => {
         rightContent={
           <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            {likesLeft} left
+            Unlimited
           </span>
         }
       />
