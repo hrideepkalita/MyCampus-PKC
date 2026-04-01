@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bell, Heart, Users, Shield, Search as SearchIcon, MessageCircle, Check, UserPlus } from "lucide-react";
+import { ArrowLeft, Bell, Heart, Users, Shield, Search as SearchIcon, MessageCircle, Check, UserPlus, Eye, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Notification {
@@ -19,6 +19,8 @@ const typeIcons: Record<string, React.ReactNode> = {
   like: <Heart className="h-4 w-4 text-pink-500" />,
   match: <Users className="h-4 w-4 text-primary" />,
   follow: <UserPlus className="h-4 w-4 text-primary" />,
+  profile_view: <Eye className="h-4 w-4 text-muted-foreground" />,
+  photo_like: <Image className="h-4 w-4 text-pink-500" />,
   verification: <Shield className="h-4 w-4 text-accent" />,
   lost_found: <SearchIcon className="h-4 w-4 text-muted-foreground" />,
   confession: <MessageCircle className="h-4 w-4 text-secondary" />,
@@ -65,8 +67,10 @@ const NotificationsPage = () => {
         prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
       );
     }
+    // profile_view is NOT clickable
+    if (notif.type === "profile_view") return;
     // Redirect to sender profile if related_id exists
-    if (notif.related_id && (notif.type === "like" || notif.type === "follow" || notif.type === "match")) {
+    if (notif.related_id && ["like", "follow", "match", "photo_like"].includes(notif.type)) {
       navigate(`/profile/${notif.related_id}`);
     }
   };
@@ -79,6 +83,10 @@ const NotificationsPage = () => {
       .eq("user_id", user.id)
       .eq("is_read", false);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+  };
+
+  const isClickable = (notif: Notification) => {
+    return notif.type !== "profile_view" && notif.related_id;
   };
 
   return (
@@ -118,7 +126,7 @@ const NotificationsPage = () => {
               onClick={() => handleNotificationClick(notif)}
               className={`w-full text-left rounded-2xl p-4 transition-all ${
                 notif.is_read ? "bg-card" : "bg-primary/5 border border-primary/10"
-              }`}
+              } ${isClickable(notif) ? "cursor-pointer" : "cursor-default"}`}
             >
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-muted">

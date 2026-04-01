@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera } from "lucide-react";
 import verifiedBadge from "@/assets/verified-badge.png";
+import FollowersModal from "@/components/FollowersModal";
+import PhotoGallery from "@/components/PhotoGallery";
+import AddPhotoModal from "@/components/AddPhotoModal";
 
 interface Profile {
   id: string;
@@ -22,6 +25,16 @@ interface Profile {
   instagram: string | null;
 }
 
+interface GalleryPhoto {
+  id: string;
+  user_id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+  like_count: number;
+  user_liked: boolean;
+}
+
 const ViewProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -35,10 +48,14 @@ const ViewProfilePage = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [mutualText, setMutualText] = useState("");
+  const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null);
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
+  const [showAddPhoto, setShowAddPhoto] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     fetchProfile();
+    fetchGalleryPhotos();
   }, [id]);
 
   useEffect(() => {
@@ -48,6 +65,7 @@ const ViewProfilePage = () => {
     checkTheyFollowMe();
     fetchFollowCounts();
     fetchMutuals();
+    trackProfileView();
   }, [user, id]);
 
   const fetchProfile = async () => {
@@ -65,6 +83,77 @@ const ViewProfilePage = () => {
       });
     }
     setLoading(false);
+  };
+
+  const fetchGalleryPhotos = useCallback(async () => {
+    if (!id) return;
+    const { data: photos } = await supabase
+      .from("profile_photos")
+      .select("*")
+      .eq("user_id", id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!photos || photos.length === 0) {
+      setGalleryPhotos([]);
+      return;
+    }
+
+    const photoIds = photos.map((p: any) => p.id);
+    const [{ data: likeCounts }, { data: userLikes }] = await Promise.all([
+      supabase.from("photo_likes").select("photo_id").in("photo_id", photoIds),
+      user
+        ? supabase.from("photo_likes").select("photo_id").in("photo_id", photoIds).eq("user_id", user.id)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const countMap: Record<string, number> = {};
+    (likeCounts || []).forEach((l: any) => {
+      countMap[l.photo_id] = (countMap[l.photo_id] || 0) + 1;
+    });
+    const userLikedSet = new Set((userLikes || []).map((l: any) => l.photo_id));
+
+    setGalleryPhotos(
+      photos.map((p: any) => ({
+        ...p,
+        like_count: countMap[p.id] || 0,
+        user_liked: userLikedSet.has(p.id),
+      }))
+    );
+  }, [id, user]);
+
+  const trackProfileView = async () => {
+    if (!user || !id || user.id === id) return;
+
+    // Spam control: max 1 view notification per 24h per viewer per viewed
+    const twentyFourAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: recent } = await supabase
+      .from("profile_views")
+      .select("id")
+      .eq("viewer_id", user.id)
+      .eq("viewed_user_id", id)
+      .gte("created_at", twentyFourAgo)
+      .limit(1);
+
+    if (recent && recent.length > 0) return;
+
+    await supabase.from("profile_views").insert({ viewer_id: user.id, viewed_user_id: id });
+
+    // Get viewer's branch for anonymous notification
+    const { data: viewerProfile } = await supabase
+      .from("profiles")
+      .select("branch")
+      .eq("id", user.id)
+      .single();
+
+    const dept = viewerProfile?.branch || "your college";
+    await supabase.from("notifications").insert({
+      user_id: id,
+      type: "profile_view",
+      title: "Profile View",
+      message: `Someone from ${dept} viewed your profile 👀`,
+      related_id: null,
+    });
   };
 
   const checkLiked = async () => {
@@ -151,7 +240,6 @@ const ViewProfilePage = () => {
       to_user_id: profile.id,
       is_like: true,
     });
-    // Fetch current user's name for notification
     const { data: myProfile } = await supabase
       .from("profiles")
       .select("name")
@@ -178,7 +266,6 @@ const ViewProfilePage = () => {
       await supabase.from("follows").insert({ follower_id: user.id, following_id: profile.id });
       setIsFollowing(true);
       setFollowersCount(c => c + 1);
-      // Send follow notification
       const { data: myProfile } = await supabase
         .from("profiles")
         .select("name")
@@ -195,11 +282,16 @@ const ViewProfilePage = () => {
     }
   };
 
-  // Determine follow button label
   const getFollowLabel = () => {
     if (isFollowing) return "Following";
     if (theyFollowMe) return "Follow Back";
     return "Follow";
+  };
+
+  const handleInstagramClick = () => {
+    if (!profile?.instagram) return;
+    const handle = profile.instagram.replace(/^@/, "");
+    window.open(`https://instagram.com/${handle}`, "_blank");
   };
 
   if (loading) {
@@ -230,6 +322,20 @@ const ViewProfilePage = () => {
         </div>
       )}
 
+      {/* Followers/Following modal */}
+      {followModal && (
+        <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />
+      )}
+
+      {/* Add Photo modal */}
+      {showAddPhoto && (
+        <AddPhotoModal
+          currentCount={galleryPhotos.length}
+          onClose={() => setShowAddPhoto(false)}
+          onAdded={fetchGalleryPhotos}
+        />
+      )}
+
       {/* Top bar */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
@@ -254,17 +360,17 @@ const ViewProfilePage = () => {
           </div>
         </div>
 
-        {/* Follow counts */}
+        {/* Follow counts - CLICKABLE */}
         <div className="mt-3 flex items-center justify-center gap-6">
-          <div className="text-center">
+          <button onClick={() => setFollowModal("followers")} className="text-center transition-opacity active:opacity-70">
             <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
             <p className="text-xs text-muted-foreground">Followers</p>
-          </div>
+          </button>
           <div className="h-8 w-px bg-border" />
-          <div className="text-center">
+          <button onClick={() => setFollowModal("following")} className="text-center transition-opacity active:opacity-70">
             <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
             <p className="text-xs text-muted-foreground">Following</p>
-          </div>
+          </button>
         </div>
 
         {/* Mutual text */}
@@ -298,6 +404,19 @@ const ViewProfilePage = () => {
           </div>
         )}
 
+        {/* Photo Gallery */}
+        <PhotoGallery photos={galleryPhotos} onPhotoLiked={fetchGalleryPhotos} ownerName={profile.name} />
+
+        {/* Add Photo button (own profile only) */}
+        {isOwnProfile && galleryPhotos.length < 5 && (
+          <button
+            onClick={() => setShowAddPhoto(true)}
+            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <Camera className="h-4 w-4" /> Add Gallery Photo ({galleryPhotos.length}/5)
+          </button>
+        )}
+
         {/* Bio */}
         {profile.bio && (
           <div className="mt-4 rounded-2xl bg-card p-4">
@@ -326,12 +445,15 @@ const ViewProfilePage = () => {
           </div>
         )}
 
-        {/* Instagram */}
+        {/* Instagram - CLICKABLE */}
         {profile.instagram && (
-          <div className="mt-3 rounded-2xl bg-card p-4 flex items-center gap-2">
+          <button
+            onClick={handleInstagramClick}
+            className="mt-3 w-full rounded-2xl bg-card p-4 flex items-center gap-2 text-left transition-colors hover:bg-muted"
+          >
             <Instagram className="h-4 w-4 text-secondary" />
-            <span className="text-sm text-foreground">{profile.instagram}</span>
-          </div>
+            <span className="text-sm text-primary font-medium">{profile.instagram}</span>
+          </button>
         )}
 
         {/* Like button (only for other users) */}

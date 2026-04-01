@@ -34,7 +34,7 @@ const DiscoverPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
   const [matchName, setMatchName] = useState("");
-  const [likesLeft, setLikesLeft] = useState(10);
+  // Unlimited likes - no limit tracking needed
   const [loading, setLoading] = useState(true);
   const [genderFilter, setGenderFilter] = useState<string>("All");
   const [skippedIds, setSkippedIds] = useState<Set<string>>(new Set());
