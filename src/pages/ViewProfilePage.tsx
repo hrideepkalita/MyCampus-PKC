@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera } from "lucide-react";
+import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera, Shield } from "lucide-react";
 import verifiedBadge from "@/assets/verified-badge.png";
 import FollowersModal from "@/components/FollowersModal";
 import PhotoGallery from "@/components/PhotoGallery";
