@@ -360,17 +360,31 @@ const ViewProfilePage = () => {
           </div>
         </div>
 
-        {/* Follow counts - CLICKABLE */}
+        {/* Follow counts - only clickable on own profile */}
         <div className="mt-3 flex items-center justify-center gap-6">
-          <button onClick={() => setFollowModal("followers")} className="text-center transition-opacity active:opacity-70">
-            <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
-            <p className="text-xs text-muted-foreground">Followers</p>
-          </button>
+          {isOwnProfile ? (
+            <button onClick={() => setFollowModal("followers")} className="text-center transition-opacity active:opacity-70">
+              <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+              <p className="text-xs text-muted-foreground">Followers</p>
+            </button>
+          ) : (
+            <div className="text-center">
+              <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+              <p className="text-xs text-muted-foreground">Followers</p>
+            </div>
+          )}
           <div className="h-8 w-px bg-border" />
-          <button onClick={() => setFollowModal("following")} className="text-center transition-opacity active:opacity-70">
-            <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
-            <p className="text-xs text-muted-foreground">Following</p>
-          </button>
+          {isOwnProfile ? (
+            <button onClick={() => setFollowModal("following")} className="text-center transition-opacity active:opacity-70">
+              <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+              <p className="text-xs text-muted-foreground">Following</p>
+            </button>
+          ) : (
+            <div className="text-center">
+              <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+              <p className="text-xs text-muted-foreground">Following</p>
+            </div>
+          )}
         </div>
 
         {/* Mutual text */}
