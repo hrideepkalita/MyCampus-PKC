@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera } from "lucide-react";
+import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera, Shield } from "lucide-react";
 import verifiedBadge from "@/assets/verified-badge.png";
 import FollowersModal from "@/components/FollowersModal";
 import PhotoGallery from "@/components/PhotoGallery";
@@ -322,8 +322,8 @@ const ViewProfilePage = () => {
         </div>
       )}
 
-      {/* Followers/Following modal */}
-      {followModal && (
+      {/* Followers/Following modal - only for own profile */}
+      {followModal && isOwnProfile && (
         <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />
       )}
 
@@ -360,17 +360,31 @@ const ViewProfilePage = () => {
           </div>
         </div>
 
-        {/* Follow counts - CLICKABLE */}
+        {/* Follow counts - only clickable on own profile */}
         <div className="mt-3 flex items-center justify-center gap-6">
-          <button onClick={() => setFollowModal("followers")} className="text-center transition-opacity active:opacity-70">
-            <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
-            <p className="text-xs text-muted-foreground">Followers</p>
-          </button>
+          {isOwnProfile ? (
+            <button onClick={() => setFollowModal("followers")} className="text-center transition-opacity active:opacity-70">
+              <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+              <p className="text-xs text-muted-foreground">Followers</p>
+            </button>
+          ) : (
+            <div className="text-center">
+              <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+              <p className="text-xs text-muted-foreground">Followers</p>
+            </div>
+          )}
           <div className="h-8 w-px bg-border" />
-          <button onClick={() => setFollowModal("following")} className="text-center transition-opacity active:opacity-70">
-            <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
-            <p className="text-xs text-muted-foreground">Following</p>
-          </button>
+          {isOwnProfile ? (
+            <button onClick={() => setFollowModal("following")} className="text-center transition-opacity active:opacity-70">
+              <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+              <p className="text-xs text-muted-foreground">Following</p>
+            </button>
+          ) : (
+            <div className="text-center">
+              <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+              <p className="text-xs text-muted-foreground">Following</p>
+            </div>
+          )}
         </div>
 
         {/* Mutual text */}
@@ -454,6 +468,18 @@ const ViewProfilePage = () => {
             <Instagram className="h-4 w-4 text-secondary" />
             <span className="text-sm text-primary font-medium">{profile.instagram}</span>
           </button>
+        )}
+
+        {/* Admin Info Section - only visible to admin */}
+        {user?.email === "rangiavlog@gmail.com" && (
+          <div className="mt-3 rounded-2xl bg-card p-4 border border-accent/30">
+            <p className="text-xs font-semibold text-accent mb-2 flex items-center gap-1">
+              <Shield className="h-3.5 w-3.5" /> Admin Info
+            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">User ID: <span className="text-foreground font-mono text-[11px]">{profile.id}</span></p>
+            </div>
+          </div>
         )}
 
         {/* Like button (only for other users) */}

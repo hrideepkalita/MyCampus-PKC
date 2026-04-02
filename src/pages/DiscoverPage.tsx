@@ -6,8 +6,9 @@ import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useFloatingHearts } from "@/App";
 
 interface Profile {
   id: string;
@@ -30,6 +31,7 @@ const GENDER_FILTERS = ["All", "Male", "Female"] as const;
 const DiscoverPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { enabled: heartsEnabled, toggle: toggleHearts } = useFloatingHearts();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
@@ -159,10 +161,17 @@ const DiscoverPage = () => {
       <TopBar
         title="Discover"
         rightContent={
-          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Unlimited
-          </span>
+          <button
+            onClick={toggleHearts}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              heartsEnabled
+                ? "bg-primary/15 text-primary"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <Heart className={`h-3.5 w-3.5 transition-colors ${heartsEnabled ? "fill-primary text-primary" : ""}`} />
+            {heartsEnabled ? "On" : "Off"}
+          </button>
         }
       />
       {/* Gender filter tabs */}

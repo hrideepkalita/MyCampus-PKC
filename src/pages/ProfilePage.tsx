@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import InterestTag from "@/components/InterestTag";
@@ -9,6 +9,9 @@ import verifiedBadge from "@/assets/verified-badge.png";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
 import { toast } from "sonner";
+import PhotoGallery from "@/components/PhotoGallery";
+import AddPhotoModal from "@/components/AddPhotoModal";
+import FollowersModal from "@/components/FollowersModal";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
 
@@ -28,6 +31,16 @@ interface Profile {
   phone: string | null;
 }
 
+interface GalleryPhoto {
+  id: string;
+  user_id: string;
+  image_url: string;
+  caption: string | null;
+  created_at: string;
+  like_count: number;
+  user_liked: boolean;
+}
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -42,13 +55,29 @@ const ProfilePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const verifyInputRef = useRef<HTMLInputElement>(null);
 
+  // Gallery
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
+  const [showAddPhoto, setShowAddPhoto] = useState(false);
+
+  // Follow counts & modal (own profile)
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null);
+
+  // Admin info
+  const [adminEmail, setAdminEmail] = useState<string | null>(null);
+
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
     if (!user) return;
     fetchProfile();
     fetchVerificationStatus();
-    // Re-fetch when page gains focus (e.g. after admin approval)
+    fetchFollowCounts();
+    fetchGalleryPhotos();
+    if (isAdmin) {
+      setAdminEmail(user.email ?? null);
+    }
     const handleFocus = () => { fetchProfile(); fetchVerificationStatus(); };
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
@@ -95,6 +124,51 @@ const ProfilePage = () => {
       setVerificationStatus(data[0].status);
     }
   };
+
+  const fetchFollowCounts = async () => {
+    if (!user) return;
+    const [{ count: followers }, { count: following }] = await Promise.all([
+      supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", user.id),
+      supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
+    ]);
+    setFollowersCount(followers || 0);
+    setFollowingCount(following || 0);
+  };
+
+  const fetchGalleryPhotos = useCallback(async () => {
+    if (!user) return;
+    const { data: photos } = await supabase
+      .from("profile_photos")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!photos || photos.length === 0) {
+      setGalleryPhotos([]);
+      return;
+    }
+
+    const photoIds = photos.map((p: any) => p.id);
+    const [{ data: likeCounts }, { data: userLikes }] = await Promise.all([
+      supabase.from("photo_likes").select("photo_id").in("photo_id", photoIds),
+      supabase.from("photo_likes").select("photo_id").in("photo_id", photoIds).eq("user_id", user.id),
+    ]);
+
+    const countMap: Record<string, number> = {};
+    (likeCounts || []).forEach((l: any) => {
+      countMap[l.photo_id] = (countMap[l.photo_id] || 0) + 1;
+    });
+    const userLikedSet = new Set((userLikes || []).map((l: any) => l.photo_id));
+
+    setGalleryPhotos(
+      photos.map((p: any) => ({
+        ...p,
+        like_count: countMap[p.id] || 0,
+        user_liked: userLikedSet.has(p.id),
+      }))
+    );
+  }, [user]);
 
   const handleSave = async () => {
     if (!user || !form) return;
@@ -247,6 +321,20 @@ const ProfilePage = () => {
         }
       />
 
+      {/* Followers/Following modal (own profile) */}
+      {followModal && user && (
+        <FollowersModal profileId={user.id} type={followModal} onClose={() => setFollowModal(null)} />
+      )}
+
+      {/* Add Photo modal */}
+      {showAddPhoto && (
+        <AddPhotoModal
+          currentCount={galleryPhotos.length}
+          onClose={() => setShowAddPhoto(false)}
+          onAdded={fetchGalleryPhotos}
+        />
+      )}
+
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
           <div className="relative h-24 w-24">
@@ -324,6 +412,47 @@ const ProfilePage = () => {
             <p className="mt-1 text-xs text-muted-foreground">{displayProfile.gender || "Set your gender"}</p>
           )}
         </div>
+
+        {/* Followers / Following counts - CLICKABLE on own profile */}
+        <div className="mt-4 flex items-center justify-center gap-6">
+          <button onClick={() => setFollowModal("followers")} className="text-center transition-opacity active:opacity-70">
+            <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </button>
+          <div className="h-8 w-px bg-border" />
+          <button onClick={() => setFollowModal("following")} className="text-center transition-opacity active:opacity-70">
+            <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+            <p className="text-xs text-muted-foreground">Following</p>
+          </button>
+        </div>
+
+        {/* Photo Gallery */}
+        {galleryPhotos.length > 0 && (
+          <PhotoGallery photos={galleryPhotos} onPhotoLiked={fetchGalleryPhotos} ownerName={displayProfile.name} />
+        )}
+
+        {/* Add Gallery Photo button (own profile) */}
+        {galleryPhotos.length < 5 && (
+          <button
+            onClick={() => setShowAddPhoto(true)}
+            className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <Camera className="h-4 w-4" /> Add Gallery Photo ({galleryPhotos.length}/5)
+          </button>
+        )}
+
+        {/* Admin Info Section */}
+        {isAdmin && user && (
+          <div className="mt-4 rounded-2xl bg-card p-4 border border-accent/30">
+            <p className="text-xs font-semibold text-accent mb-2 flex items-center gap-1">
+              <Shield className="h-3.5 w-3.5" /> Admin Info
+            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">User ID: <span className="text-foreground font-mono text-[11px]">{user.id}</span></p>
+              <p className="text-xs text-muted-foreground">Email: <span className="text-foreground">{adminEmail}</span></p>
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 rounded-2xl bg-card p-4">
           {editing ? (
