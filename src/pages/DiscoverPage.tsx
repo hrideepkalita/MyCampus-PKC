@@ -161,10 +161,17 @@ const DiscoverPage = () => {
       <TopBar
         title="Discover"
         rightContent={
-          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Unlimited
-          </span>
+          <button
+            onClick={toggleHearts}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+              heartsEnabled
+                ? "bg-primary/15 text-primary"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <Heart className={`h-3.5 w-3.5 transition-colors ${heartsEnabled ? "fill-primary text-primary" : ""}`} />
+            {heartsEnabled ? "On" : "Off"}
+          </button>
         }
       />
       {/* Gender filter tabs */}

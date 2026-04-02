@@ -322,8 +322,8 @@ const ViewProfilePage = () => {
         </div>
       )}
 
-      {/* Followers/Following modal */}
-      {followModal && (
+      {/* Followers/Following modal - only for own profile */}
+      {followModal && isOwnProfile && (
         <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />
       )}
 
