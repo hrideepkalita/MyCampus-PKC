@@ -31,6 +31,7 @@ const GENDER_FILTERS = ["All", "Male", "Female"] as const;
 const DiscoverPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { enabled: heartsEnabled, toggle: toggleHearts } = useFloatingHearts();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatch, setShowMatch] = useState(false);
