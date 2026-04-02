@@ -470,6 +470,18 @@ const ViewProfilePage = () => {
           </button>
         )}
 
+        {/* Admin Info Section - only visible to admin */}
+        {user?.email === "rangiavlog@gmail.com" && (
+          <div className="mt-3 rounded-2xl bg-card p-4 border border-accent/30">
+            <p className="text-xs font-semibold text-accent mb-2 flex items-center gap-1">
+              <Shield className="h-3.5 w-3.5" /> Admin Info
+            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">User ID: <span className="text-foreground font-mono text-[11px]">{profile.id}</span></p>
+            </div>
+          </div>
+        )}
+
         {/* Like button (only for other users) */}
         {!isOwnProfile && (
           <button
