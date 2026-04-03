@@ -292,6 +292,35 @@ const ViewProfilePage = () => {
     return "Follow";
   };
 
+  const checkFriendRequest = async () => {
+    if (!user || !id || user.id === id) return;
+    const { data } = await supabase
+      .from("friend_requests")
+      .select("status, from_user_id, to_user_id")
+      .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${id}),and(from_user_id.eq.${id},to_user_id.eq.${user.id})`)
+      .maybeSingle();
+    setFriendRequestStatus(data?.status || null);
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!user || !profile) return;
+    const { error } = await supabase.from("friend_requests").insert({
+      from_user_id: user.id,
+      to_user_id: profile.id,
+    });
+    if (error) { toast.error("Already sent"); return; }
+    setFriendRequestStatus("pending");
+    const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+    await supabase.from("notifications").insert({
+      user_id: profile.id,
+      type: "friend_request",
+      title: `${myProfile?.name || "Someone"} sent you a friend request!`,
+      message: `${myProfile?.name || "Someone"} wants to be your friend 👋`,
+      related_id: user.id,
+    });
+    toast.success("Friend request sent!");
+  };
+
   const handleInstagramClick = () => {
     if (!profile?.instagram) return;
     const handle = profile.instagram.replace(/^@/, "");
