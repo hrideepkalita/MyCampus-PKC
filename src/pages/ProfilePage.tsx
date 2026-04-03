@@ -5,6 +5,7 @@ import InterestTag from "@/components/InterestTag";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Edit, Shield, Instagram, Save, X, Camera, Upload } from "lucide-react";
+import { compressImage } from "@/lib/imageCompression";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
@@ -199,11 +200,12 @@ const ProfilePage = () => {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, index?: number) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !user) return;
+    if (!rawFile.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (rawFile.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
     setUploading(true);
+    const file = await compressImage(rawFile);
     const ext = file.name.split(".").pop();
     const isMainPhoto = index === undefined;
     const path = isMainPhoto ? `${user.id}/avatar.${ext}` : `${user.id}/photo_${index}.${ext}`;
@@ -241,11 +243,12 @@ const ProfilePage = () => {
   };
 
   const handleVerificationUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !user) return;
+    if (!rawFile.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (rawFile.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
     setVerifying(true);
+    const file = await compressImage(rawFile);
 
     const ext = file.name.split(".").pop();
     const path = `${user.id}/verification_id_${Date.now()}.${ext}`;

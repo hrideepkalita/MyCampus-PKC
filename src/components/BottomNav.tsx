@@ -2,8 +2,8 @@ import { Home, Users, Megaphone, MessageCircle, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
-  { icon: Home, label: "Home", path: "/discover" },
-  { icon: Users, label: "Friends", path: "/matches" },
+  { icon: Home, label: "Home", path: "/feed" },
+  { icon: Users, label: "Friends", path: "/friends" },
   { icon: Megaphone, label: "Notices", path: "/notices" },
   { icon: MessageCircle, label: "Confess", path: "/confessions" },
   { icon: Search, label: "Lost & Found", path: "/lost-found" },

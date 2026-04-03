@@ -3,7 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera, Shield } from "lucide-react";
+import { ArrowLeft, Instagram, Heart, UserPlus, UserCheck, Camera, Shield, UserPlus2, Send } from "lucide-react";
+import DefaultAvatar from "@/components/DefaultAvatar";
+import { toast } from "sonner";
 import verifiedBadge from "@/assets/verified-badge.png";
 import FollowersModal from "@/components/FollowersModal";
 import PhotoGallery from "@/components/PhotoGallery";
@@ -51,6 +53,7 @@ const ViewProfilePage = () => {
   const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [showAddPhoto, setShowAddPhoto] = useState(false);
+  const [friendRequestStatus, setFriendRequestStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -66,6 +69,7 @@ const ViewProfilePage = () => {
     fetchFollowCounts();
     fetchMutuals();
     trackProfileView();
+    checkFriendRequest();
   }, [user, id]);
 
   const fetchProfile = async () => {
@@ -288,6 +292,35 @@ const ViewProfilePage = () => {
     return "Follow";
   };
 
+  const checkFriendRequest = async () => {
+    if (!user || !id || user.id === id) return;
+    const { data } = await supabase
+      .from("friend_requests")
+      .select("status, from_user_id, to_user_id")
+      .or(`and(from_user_id.eq.${user.id},to_user_id.eq.${id}),and(from_user_id.eq.${id},to_user_id.eq.${user.id})`)
+      .maybeSingle();
+    setFriendRequestStatus(data?.status || null);
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!user || !profile) return;
+    const { error } = await supabase.from("friend_requests").insert({
+      from_user_id: user.id,
+      to_user_id: profile.id,
+    });
+    if (error) { toast.error("Already sent"); return; }
+    setFriendRequestStatus("pending");
+    const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+    await supabase.from("notifications").insert({
+      user_id: profile.id,
+      type: "friend_request",
+      title: `${myProfile?.name || "Someone"} sent you a friend request!`,
+      message: `${myProfile?.name || "Someone"} wants to be your friend 👋`,
+      related_id: user.id,
+    });
+    toast.success("Friend request sent!");
+  };
+
   const handleInstagramClick = () => {
     if (!profile?.instagram) return;
     const handle = profile.instagram.replace(/^@/, "");
@@ -392,19 +425,35 @@ const ViewProfilePage = () => {
           <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>
         )}
 
-        {/* Follow button (other users only) */}
+        {/* Follow + Add Friend buttons (other users only) */}
         {!isOwnProfile && (
-          <button
-            onClick={handleFollowToggle}
-            className={`mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
-              isFollowing
-                ? "bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground"
-            }`}
-          >
-            {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-            {getFollowLabel()}
-          </button>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={handleFollowToggle}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
+                isFollowing
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-primary text-primary-foreground"
+              }`}
+            >
+              {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+              {getFollowLabel()}
+            </button>
+            <button
+              onClick={handleSendFriendRequest}
+              disabled={friendRequestStatus === "pending" || friendRequestStatus === "accepted"}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
+                friendRequestStatus === "accepted"
+                  ? "bg-accent/20 text-accent"
+                  : friendRequestStatus === "pending"
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-secondary text-secondary-foreground"
+              }`}
+            >
+              <Send className="h-4 w-4" />
+              {friendRequestStatus === "accepted" ? "Friends" : friendRequestStatus === "pending" ? "Sent" : "Add Friend"}
+            </button>
+          </div>
         )}
 
         {/* Additional photos */}
