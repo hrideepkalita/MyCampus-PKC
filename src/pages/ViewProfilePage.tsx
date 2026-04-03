@@ -53,6 +53,7 @@ const ViewProfilePage = () => {
   const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [showAddPhoto, setShowAddPhoto] = useState(false);
+  const [friendRequestStatus, setFriendRequestStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
