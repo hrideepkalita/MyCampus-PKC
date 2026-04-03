@@ -5,6 +5,7 @@ import InterestTag from "@/components/InterestTag";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Edit, Shield, Instagram, Save, X, Camera, Upload } from "lucide-react";
+import { compressImage } from "@/lib/imageCompression";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { useNavigate } from "react-router-dom";
 import { ALL_INTERESTS, LOOKING_FOR_OPTIONS } from "@/lib/mockData";
