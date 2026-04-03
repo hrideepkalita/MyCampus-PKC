@@ -243,11 +243,12 @@ const ProfilePage = () => {
   };
 
   const handleVerificationUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !user) return;
+    if (!rawFile.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (rawFile.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
     setVerifying(true);
+    const file = await compressImage(rawFile);
 
     const ext = file.name.split(".").pop();
     const path = `${user.id}/verification_id_${Date.now()}.${ext}`;
