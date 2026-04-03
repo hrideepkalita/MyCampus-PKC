@@ -425,19 +425,35 @@ const ViewProfilePage = () => {
           <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>
         )}
 
-        {/* Follow button (other users only) */}
+        {/* Follow + Add Friend buttons (other users only) */}
         {!isOwnProfile && (
-          <button
-            onClick={handleFollowToggle}
-            className={`mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
-              isFollowing
-                ? "bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground"
-            }`}
-          >
-            {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-            {getFollowLabel()}
-          </button>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={handleFollowToggle}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
+                isFollowing
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-primary text-primary-foreground"
+              }`}
+            >
+              {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+              {getFollowLabel()}
+            </button>
+            <button
+              onClick={handleSendFriendRequest}
+              disabled={friendRequestStatus === "pending" || friendRequestStatus === "accepted"}
+              className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all active:scale-[0.98] ${
+                friendRequestStatus === "accepted"
+                  ? "bg-accent/20 text-accent"
+                  : friendRequestStatus === "pending"
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-secondary text-secondary-foreground"
+              }`}
+            >
+              <Send className="h-4 w-4" />
+              {friendRequestStatus === "accepted" ? "Friends" : friendRequestStatus === "pending" ? "Sent" : "Add Friend"}
+            </button>
+          </div>
         )}
 
         {/* Additional photos */}

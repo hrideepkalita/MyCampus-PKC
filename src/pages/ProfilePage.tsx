@@ -200,11 +200,12 @@ const ProfilePage = () => {
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, index?: number) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !user) return;
+    if (!rawFile.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (rawFile.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
     setUploading(true);
+    const file = await compressImage(rawFile);
     const ext = file.name.split(".").pop();
     const isMainPhoto = index === undefined;
     const path = isMainPhoto ? `${user.id}/avatar.${ext}` : `${user.id}/photo_${index}.${ext}`;
