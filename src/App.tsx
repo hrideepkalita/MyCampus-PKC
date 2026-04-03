@@ -3,13 +3,15 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import FloatingHearts from "@/components/FloatingHearts";
+import SplashScreen from "@/components/SplashScreen";
 import LoginPage from "./pages/LoginPage";
+import FeedPage from "./pages/FeedPage";
+import FriendsPage from "./pages/FriendsPage";
 import DiscoverPage from "./pages/DiscoverPage";
-import MatchesPage from "./pages/MatchesPage";
 import ConfessionsPage from "./pages/ConfessionsPage";
 import ProfilePage from "./pages/ProfilePage";
 import NotificationsPage from "./pages/NotificationsPage";
@@ -19,7 +21,7 @@ import ViewProfilePage from "./pages/ViewProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NoticesPage from "./pages/NoticesPage";
 import NotFound from "./pages/NotFound";
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, createContext, useContext } from "react";
 
 // Context for floating hearts toggle
 interface FloatingHeartsContextType {
@@ -37,6 +39,7 @@ export const useFloatingHearts = () => useContext(FloatingHeartsContext);
 const queryClient = new QueryClient();
 
 const AppContent = () => {
+  const { loading } = useAuth();
   const [heartsEnabled, setHeartsEnabled] = useState(() => {
     try {
       return localStorage.getItem("floating_hearts_enabled") === "true";
@@ -53,6 +56,11 @@ const AppContent = () => {
     });
   };
 
+  // Show splash while checking auth
+  if (loading) {
+    return <SplashScreen />;
+  }
+
   return (
     <FloatingHeartsContext.Provider value={{ enabled: heartsEnabled, toggle }}>
       <TooltipProvider>
@@ -62,8 +70,9 @@ const AppContent = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LoginPage />} />
+            <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
-            <Route path="/matches" element={<ProtectedRoute><MatchesPage /></ProtectedRoute>} />
+            <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
             <Route path="/confessions" element={<ProtectedRoute><ConfessionsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<ProtectedRoute><ViewProfilePage /></ProtectedRoute>} />

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { X, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { compressImage } from "@/lib/imageCompression";
 
 interface AddPhotoModalProps {
   currentCount: number;
@@ -20,7 +21,7 @@ const AddPhotoModal = ({ currentCount, onClose, onAdded }: AddPhotoModalProps) =
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     if (!f.type.startsWith("image/")) {
@@ -31,8 +32,9 @@ const AddPhotoModal = ({ currentCount, onClose, onAdded }: AddPhotoModalProps) =
       toast.error("Image must be under 5MB");
       return;
     }
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+    const compressed = await compressImage(f);
+    setFile(compressed);
+    setPreview(URL.createObjectURL(compressed));
   };
 
   const handleSubmit = async () => {
@@ -90,15 +92,11 @@ const AddPhotoModal = ({ currentCount, onClose, onAdded }: AddPhotoModalProps) =
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Image preview / picker */}
           {preview ? (
             <div className="relative aspect-square rounded-xl overflow-hidden bg-muted">
               <img src={preview} alt="Preview" className="h-full w-full object-cover" />
               <button
-                onClick={() => {
-                  setFile(null);
-                  setPreview(null);
-                }}
+                onClick={() => { setFile(null); setPreview(null); }}
                 className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white"
               >
                 <X className="h-3.5 w-3.5" />
@@ -115,7 +113,6 @@ const AddPhotoModal = ({ currentCount, onClose, onAdded }: AddPhotoModalProps) =
           )}
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
-          {/* Caption */}
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
@@ -129,7 +126,6 @@ const AddPhotoModal = ({ currentCount, onClose, onAdded }: AddPhotoModalProps) =
             {currentCount}/{MAX_PHOTOS} photos used
           </p>
 
-          {/* Submit */}
           <button
             onClick={handleSubmit}
             disabled={!file || uploading}
