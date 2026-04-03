@@ -69,6 +69,7 @@ const ViewProfilePage = () => {
     fetchFollowCounts();
     fetchMutuals();
     trackProfileView();
+    checkFriendRequest();
   }, [user, id]);
 
   const fetchProfile = async () => {
