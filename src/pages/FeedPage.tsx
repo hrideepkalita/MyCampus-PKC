@@ -3,7 +3,7 @@ import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, MessageCircle, MoreVertical, Trash2, Edit, Share2, Plus, Eye } from "lucide-react";
+import { Heart, MessageCircle, MoreVertical, Trash2, Edit, Share2, Plus, Eye, Send, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFloatingHearts } from "@/App";
 import DefaultAvatar from "@/components/DefaultAvatar";
@@ -11,6 +11,7 @@ import CreatePostModal from "@/components/CreatePostModal";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Post {
   id: string;
@@ -42,12 +43,15 @@ const FeedPage = () => {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [editingPost, setEditingPost] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState("");
+  const [heartAnimId, setHeartAnimId] = useState<string | null>(null);
+  const [commentOpen, setCommentOpen] = useState<string | null>(null);
   const observerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const lastTapRef = useRef<{ id: string; time: number } | null>(null);
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!append) setLoading(true);
 
     const { data: rawPosts } = await supabase
       .from("posts")
@@ -113,14 +117,77 @@ const FeedPage = () => {
     return () => obs.disconnect();
   }, [posts.length, loading, hasMore, fetchPosts]);
 
+  // Video autoplay/pause on viewport
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    videoRefs.current.forEach((video, postId) => {
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              video.play().catch(() => {});
+            } else {
+              video.pause();
+            }
+          });
+        },
+        { threshold: 0.6 }
+      );
+      obs.observe(video);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [posts]);
+
   // Track video views
   const handleVideoPlay = async (postId: string) => {
     if (!user) return;
     await supabase.from("post_views").insert({ user_id: user.id, post_id: postId }).select();
   };
 
+  // Double-tap to like
+  const handleDoubleTap = (post: Post) => {
+    const now = Date.now();
+    if (lastTapRef.current && lastTapRef.current.id === post.id && now - lastTapRef.current.time < 300) {
+      if (!post.user_liked) {
+        triggerLike(post);
+      }
+      setHeartAnimId(post.id);
+      setTimeout(() => setHeartAnimId(null), 800);
+      lastTapRef.current = null;
+    } else {
+      lastTapRef.current = { id: post.id, time: now };
+    }
+  };
+
+  const triggerLike = async (post: Post) => {
+    // Optimistic update
+    setPosts(prev => prev.map(p => p.id === post.id ? {
+      ...p, user_liked: true, like_count: p.like_count + 1,
+    } : p));
+
+    await supabase.from("post_likes").insert({ user_id: user!.id, post_id: post.id });
+    if (post.user_id !== user!.id) {
+      const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user!.id).single();
+      await supabase.from("notifications").insert({
+        user_id: post.user_id,
+        type: "post_like",
+        title: `${myProfile?.name || "Someone"} liked your post!`,
+        message: `${myProfile?.name || "Someone"} liked your post ❤️`,
+        related_id: post.id,
+      });
+    }
+  };
+
   const handleLike = async (post: Post) => {
     if (!user) return;
+    // Optimistic update
+    setPosts(prev => prev.map(p => p.id === post.id ? {
+      ...p,
+      user_liked: !p.user_liked,
+      like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1,
+    } : p));
+
     if (post.user_liked) {
       await supabase.from("post_likes").delete().eq("user_id", user.id).eq("post_id", post.id);
     } else {
@@ -129,31 +196,26 @@ const FeedPage = () => {
         const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
         await supabase.from("notifications").insert({
           user_id: post.user_id,
-          type: "like",
+          type: "post_like",
           title: `${myProfile?.name || "Someone"} liked your post!`,
           message: `${myProfile?.name || "Someone"} liked your post ❤️`,
-          related_id: user.id,
+          related_id: post.id,
         });
       }
     }
-    setPosts(prev => prev.map(p => p.id === post.id ? {
-      ...p,
-      user_liked: !p.user_liked,
-      like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1,
-    } : p));
   };
 
   const handleDelete = async (postId: string) => {
     if (!confirm("Delete this post?")) return;
-    await supabase.from("posts").delete().eq("id", postId);
     setPosts(prev => prev.filter(p => p.id !== postId));
+    await supabase.from("posts").delete().eq("id", postId);
     toast.success("Post deleted");
     setMenuOpen(null);
   };
 
   const handleEditSave = async (postId: string) => {
-    await supabase.from("posts").update({ content: editCaption }).eq("id", postId);
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, content: editCaption } : p));
+    await supabase.from("posts").update({ content: editCaption }).eq("id", postId);
     setEditingPost(null);
     toast.success("Post updated");
   };
@@ -230,16 +292,22 @@ const FeedPage = () => {
               </div>
             </div>
 
-            {/* Media */}
+            {/* Media with double-tap */}
             {post.media_url && (
-              <div className="relative w-full">
+              <div
+                className="relative w-full"
+                onClick={() => handleDoubleTap(post)}
+              >
                 {post.media_type === "video" ? (
                   <div className="relative">
                     <video
                       ref={el => { if (el) videoRefs.current.set(post.id, el); }}
                       src={post.media_url}
-                      className="w-full max-h-[70vh] object-cover bg-muted"
-                      controls
+                      className="w-full object-contain bg-muted"
+                      style={{ maxHeight: "85vh" }}
+                      loop
+                      muted
+                      playsInline
                       preload="metadata"
                       onPlay={() => handleVideoPlay(post.id)}
                     />
@@ -252,6 +320,21 @@ const FeedPage = () => {
                 ) : (
                   <img src={post.media_url} alt="" className="w-full max-h-[70vh] object-cover bg-muted" loading="lazy" />
                 )}
+
+                {/* Double-tap heart animation */}
+                <AnimatePresence>
+                  {heartAnimId === post.id && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 1 }}
+                      animate={{ scale: 1.2, opacity: 1 }}
+                      exit={{ scale: 1.5, opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <Heart className="h-20 w-20 fill-red-500 text-red-500 drop-shadow-lg" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
@@ -259,8 +342,11 @@ const FeedPage = () => {
             <div className="px-4 py-2">
               <div className="flex items-center gap-4">
                 <button onClick={() => handleLike(post)} className="flex items-center gap-1.5">
-                  <Heart className={`h-5 w-5 transition-colors ${post.user_liked ? "fill-destructive text-destructive" : "text-foreground"}`} />
+                  <Heart className={`h-5 w-5 transition-all ${post.user_liked ? "fill-destructive text-destructive scale-110" : "text-foreground"}`} />
                   {post.like_count > 0 && <span className="text-xs font-medium text-foreground">{post.like_count}</span>}
+                </button>
+                <button onClick={() => handleShare(post)} className="flex items-center gap-1.5">
+                  <Share2 className="h-5 w-5 text-foreground" />
                 </button>
               </div>
 
