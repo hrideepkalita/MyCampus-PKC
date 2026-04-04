@@ -17,8 +17,11 @@ interface Notification {
 
 const typeIcons: Record<string, React.ReactNode> = {
   like: <Heart className="h-4 w-4 text-pink-500" />,
+  post_like: <Heart className="h-4 w-4 text-pink-500" />,
   match: <Users className="h-4 w-4 text-primary" />,
   follow: <UserPlus className="h-4 w-4 text-primary" />,
+  friend_request: <UserPlus className="h-4 w-4 text-primary" />,
+  friend_accepted: <Users className="h-4 w-4 text-primary" />,
   profile_view: <Eye className="h-4 w-4 text-muted-foreground" />,
   photo_like: <Image className="h-4 w-4 text-pink-500" />,
   verification: <Shield className="h-4 w-4 text-accent" />,
@@ -60,16 +63,27 @@ const NotificationsPage = () => {
   };
 
   const handleNotificationClick = async (notif: Notification) => {
-    // Mark as read
     if (!notif.is_read) {
       await supabase.from("notifications").update({ is_read: true }).eq("id", notif.id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
       );
     }
-    // profile_view is NOT clickable
     if (notif.type === "profile_view") return;
-    // Redirect to sender profile if related_id exists
+
+    // Post like → redirect to feed (post)
+    if (notif.type === "post_like" && notif.related_id) {
+      navigate(`/feed`);
+      return;
+    }
+
+    // Friend request / accepted → sender's profile
+    if (["friend_request", "friend_accepted"].includes(notif.type) && notif.related_id) {
+      navigate(`/profile/${notif.related_id}`);
+      return;
+    }
+
+    // Like, follow, match, photo_like → sender's profile
     if (notif.related_id && ["like", "follow", "match", "photo_like"].includes(notif.type)) {
       navigate(`/profile/${notif.related_id}`);
     }
