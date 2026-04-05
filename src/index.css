@@ -119,14 +119,3 @@
     font-family: var(--font-body);
   }
 }
-/* 🔥 Hide Lovable banner */
-button[title="Edit with Lovable"],
-a[title="Edit with Lovable"],
-div[style*="Lovable"] {
-  display: none !important;
-}
-
-/* Optional: hide injected iframe (if still visible) */
-iframe {
-  display: none !important;
-}

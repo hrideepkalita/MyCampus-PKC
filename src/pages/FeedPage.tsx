@@ -3,11 +3,12 @@ import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, MessageCircle, MoreVertical, Trash2, Edit, Share2, Plus, Eye, Send, X } from "lucide-react";
+import { Heart, MessageCircle, MoreVertical, Trash2, Edit, Share2, Plus, Eye, Volume2, VolumeX, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFloatingHearts } from "@/App";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import CreatePostModal from "@/components/CreatePostModal";
+import CommentsSheet from "@/components/CommentsSheet";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -20,6 +21,7 @@ interface Post {
   media_url: string | null;
   media_type: string;
   created_at: string;
+  source?: string;
   profile: {
     name: string;
     photo_url: string | null;
@@ -28,6 +30,7 @@ interface Post {
   like_count: number;
   view_count: number;
   user_liked: boolean;
+  comment_count: number;
 }
 
 const BATCH = 10;
@@ -44,10 +47,12 @@ const FeedPage = () => {
   const [editingPost, setEditingPost] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState("");
   const [heartAnimId, setHeartAnimId] = useState<string | null>(null);
-  const [commentOpen, setCommentOpen] = useState<string | null>(null);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
   const observerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
   const lastTapRef = useRef<{ id: string; time: number } | null>(null);
+  const activeVideoRef = useRef<string | null>(null);
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
     if (!user) return;
@@ -70,11 +75,12 @@ const FeedPage = () => {
     const userIds = [...new Set(rawPosts.map(p => p.user_id))];
     const postIds = rawPosts.map(p => p.id);
 
-    const [{ data: profiles }, { data: likes }, { data: userLikes }, { data: views }] = await Promise.all([
+    const [{ data: profiles }, { data: likes }, { data: userLikes }, { data: views }, { data: comments }] = await Promise.all([
       supabase.from("profiles").select("id, name, photo_url, is_verified").in("id", userIds),
       supabase.from("post_likes").select("post_id").in("post_id", postIds),
       supabase.from("post_likes").select("post_id").in("post_id", postIds).eq("user_id", user.id),
       supabase.from("post_views").select("post_id").in("post_id", postIds),
+      supabase.from("comments").select("post_id").in("post_id", postIds),
     ]);
 
     const profileMap = new Map((profiles || []).map(p => [p.id, p]));
@@ -83,6 +89,8 @@ const FeedPage = () => {
     const userLikedSet = new Set((userLikes || []).map((l: any) => l.post_id));
     const viewCountMap: Record<string, number> = {};
     (views || []).forEach((v: any) => { viewCountMap[v.post_id] = (viewCountMap[v.post_id] || 0) + 1; });
+    const commentCountMap: Record<string, number> = {};
+    (comments || []).forEach((c: any) => { commentCountMap[c.post_id] = (commentCountMap[c.post_id] || 0) + 1; });
 
     const enriched: Post[] = rawPosts.map(p => {
       const prof = profileMap.get(p.user_id);
@@ -96,6 +104,7 @@ const FeedPage = () => {
         like_count: likeCountMap[p.id] || 0,
         view_count: viewCountMap[p.id] || 0,
         user_liked: userLikedSet.has(p.id),
+        comment_count: commentCountMap[p.id] || 0,
       };
     });
 
@@ -117,7 +126,7 @@ const FeedPage = () => {
     return () => obs.disconnect();
   }, [posts.length, loading, hasMore, fetchPosts]);
 
-  // Video autoplay/pause on viewport
+  // Video autoplay/pause - only one at a time
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
     videoRefs.current.forEach((video, postId) => {
@@ -125,9 +134,16 @@ const FeedPage = () => {
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
+              // Pause all other videos
+              videoRefs.current.forEach((v, id) => { if (id !== postId) v.pause(); });
+              activeVideoRef.current = postId;
+              video.muted = isMuted;
               video.play().catch(() => {});
             } else {
-              video.pause();
+              if (activeVideoRef.current === postId) {
+                video.pause();
+                activeVideoRef.current = null;
+              }
             }
           });
         },
@@ -137,21 +153,17 @@ const FeedPage = () => {
       observers.push(obs);
     });
     return () => observers.forEach(o => o.disconnect());
-  }, [posts]);
+  }, [posts, isMuted]);
 
-  // Track video views
   const handleVideoPlay = async (postId: string) => {
     if (!user) return;
     await supabase.from("post_views").insert({ user_id: user.id, post_id: postId }).select();
   };
 
-  // Double-tap to like
   const handleDoubleTap = (post: Post) => {
     const now = Date.now();
     if (lastTapRef.current && lastTapRef.current.id === post.id && now - lastTapRef.current.time < 300) {
-      if (!post.user_liked) {
-        triggerLike(post);
-      }
+      if (!post.user_liked) triggerLike(post);
       setHeartAnimId(post.id);
       setTimeout(() => setHeartAnimId(null), 800);
       lastTapRef.current = null;
@@ -161,17 +173,12 @@ const FeedPage = () => {
   };
 
   const triggerLike = async (post: Post) => {
-    // Optimistic update
-    setPosts(prev => prev.map(p => p.id === post.id ? {
-      ...p, user_liked: true, like_count: p.like_count + 1,
-    } : p));
-
+    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, user_liked: true, like_count: p.like_count + 1 } : p));
     await supabase.from("post_likes").insert({ user_id: user!.id, post_id: post.id });
     if (post.user_id !== user!.id) {
       const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user!.id).single();
       await supabase.from("notifications").insert({
-        user_id: post.user_id,
-        type: "post_like",
+        user_id: post.user_id, type: "post_like",
         title: `${myProfile?.name || "Someone"} liked your post!`,
         message: `${myProfile?.name || "Someone"} liked your post ❤️`,
         related_id: post.id,
@@ -181,13 +188,7 @@ const FeedPage = () => {
 
   const handleLike = async (post: Post) => {
     if (!user) return;
-    // Optimistic update
-    setPosts(prev => prev.map(p => p.id === post.id ? {
-      ...p,
-      user_liked: !p.user_liked,
-      like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1,
-    } : p));
-
+    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 } : p));
     if (post.user_liked) {
       await supabase.from("post_likes").delete().eq("user_id", user.id).eq("post_id", post.id);
     } else {
@@ -195,8 +196,7 @@ const FeedPage = () => {
       if (post.user_id !== user.id) {
         const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
         await supabase.from("notifications").insert({
-          user_id: post.user_id,
-          type: "post_like",
+          user_id: post.user_id, type: "post_like",
           title: `${myProfile?.name || "Someone"} liked your post!`,
           message: `${myProfile?.name || "Someone"} liked your post ❤️`,
           related_id: post.id,
@@ -230,33 +230,39 @@ const FeedPage = () => {
     setMenuOpen(null);
   };
 
+  const toggleMute = () => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    videoRefs.current.forEach(v => { v.muted = newMuted; });
+  };
+
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
       <TopBar
         title="Home"
         rightContent={
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={toggleHearts}
-              className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                heartsEnabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-              }`}
-            >
+            <button onClick={toggleHearts} className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${heartsEnabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
               <Heart className={`h-3.5 w-3.5 ${heartsEnabled ? "fill-primary text-primary" : ""}`} />
             </button>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground"
-            >
+            <button onClick={() => setShowCreate(true)} className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
               <Plus className="h-4 w-4" />
             </button>
           </div>
         }
       />
 
-      {showCreate && (
-        <CreatePostModal onClose={() => setShowCreate(false)} onCreated={() => fetchPosts()} />
-      )}
+      {showCreate && <CreatePostModal onClose={() => setShowCreate(false)} onCreated={() => fetchPosts()} />}
+
+      <AnimatePresence>
+        {commentPostId && (
+          <CommentsSheet
+            postId={commentPostId}
+            postOwnerId={posts.find(p => p.id === commentPostId)?.user_id || ""}
+            onClose={() => setCommentPostId(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="mx-auto max-w-md">
         {posts.map(post => (
@@ -265,9 +271,14 @@ const FeedPage = () => {
             <div className="flex items-center justify-between px-4 py-3">
               <button onClick={() => navigate(`/profile/${post.user_id}`)} className="flex items-center gap-2.5">
                 <DefaultAvatar src={post.profile.photo_url} alt={post.profile.name} className="h-9 w-9" />
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold text-foreground">{post.profile.name}</span>
-                  {post.profile.is_verified && <img src={verifiedBadge} alt="V" className="h-3.5 w-3.5" />}
+                <div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-semibold text-foreground">{post.profile.name}</span>
+                    {post.profile.is_verified && <img src={verifiedBadge} alt="V" className="h-3.5 w-3.5" />}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                  </span>
                 </div>
               </button>
               <div className="relative">
@@ -292,12 +303,9 @@ const FeedPage = () => {
               </div>
             </div>
 
-            {/* Media with double-tap */}
+            {/* Media */}
             {post.media_url && (
-              <div
-                className="relative w-full"
-                onClick={() => handleDoubleTap(post)}
-              >
+              <div className="relative w-full" onClick={() => handleDoubleTap(post)}>
                 {post.media_type === "video" ? (
                   <div className="relative">
                     <video
@@ -305,14 +313,17 @@ const FeedPage = () => {
                       src={post.media_url}
                       className="w-full object-contain bg-muted"
                       style={{ maxHeight: "85vh" }}
-                      loop
-                      muted
-                      playsInline
-                      preload="metadata"
+                      loop muted={isMuted} playsInline preload="metadata"
                       onPlay={() => handleVideoPlay(post.id)}
                     />
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleMute(); }}
+                      className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm"
+                    >
+                      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                    </button>
                     {post.view_count > 0 && (
-                      <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] text-white">
                         <Eye className="h-3 w-3" /> {post.view_count}
                       </div>
                     )}
@@ -321,16 +332,9 @@ const FeedPage = () => {
                   <img src={post.media_url} alt="" className="w-full max-h-[70vh] object-cover bg-muted" loading="lazy" />
                 )}
 
-                {/* Double-tap heart animation */}
                 <AnimatePresence>
                   {heartAnimId === post.id && (
-                    <motion.div
-                      initial={{ scale: 0, opacity: 1 }}
-                      animate={{ scale: 1.2, opacity: 1 }}
-                      exit={{ scale: 1.5, opacity: 0 }}
-                      transition={{ duration: 0.6 }}
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                    >
+                    <motion.div initial={{ scale: 0, opacity: 1 }} animate={{ scale: 1.2, opacity: 1 }} exit={{ scale: 1.5, opacity: 0 }} transition={{ duration: 0.6 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <Heart className="h-20 w-20 fill-red-500 text-red-500 drop-shadow-lg" />
                     </motion.div>
                   )}
@@ -341,11 +345,15 @@ const FeedPage = () => {
             {/* Actions */}
             <div className="px-4 py-2">
               <div className="flex items-center gap-4">
-                <button onClick={() => handleLike(post)} className="flex items-center gap-1.5">
+                <button onClick={() => handleLike(post)} className="flex items-center gap-1.5 active:scale-90 transition-transform">
                   <Heart className={`h-5 w-5 transition-all ${post.user_liked ? "fill-destructive text-destructive scale-110" : "text-foreground"}`} />
                   {post.like_count > 0 && <span className="text-xs font-medium text-foreground">{post.like_count}</span>}
                 </button>
-                <button onClick={() => handleShare(post)} className="flex items-center gap-1.5">
+                <button onClick={() => setCommentPostId(post.id)} className="flex items-center gap-1.5 active:scale-90 transition-transform">
+                  <MessageCircle className="h-5 w-5 text-foreground" />
+                  {post.comment_count > 0 && <span className="text-xs font-medium text-foreground">{post.comment_count}</span>}
+                </button>
+                <button onClick={() => handleShare(post)} className="active:scale-90 transition-transform">
                   <Share2 className="h-5 w-5 text-foreground" />
                 </button>
               </div>
@@ -359,14 +367,15 @@ const FeedPage = () => {
                 </div>
               ) : post.content ? (
                 <p className="mt-1 text-sm text-foreground">
-                  <span className="font-semibold">{post.profile.name}</span>{" "}
-                  {post.content}
+                  <span className="font-semibold">{post.profile.name}</span> {post.content}
                 </p>
               ) : null}
 
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-              </p>
+              {post.comment_count > 0 && (
+                <button onClick={() => setCommentPostId(post.id)} className="mt-1 text-xs text-muted-foreground">
+                  View all {post.comment_count} comments
+                </button>
+              )}
             </div>
           </div>
         ))}

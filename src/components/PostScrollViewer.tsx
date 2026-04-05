@@ -1,0 +1,232 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { X, Heart, MessageCircle, Share2, Volume2, VolumeX } from "lucide-react";
+import DefaultAvatar from "@/components/DefaultAvatar";
+import verifiedBadge from "@/assets/verified-badge.png";
+import CommentsSheet from "@/components/CommentsSheet";
+import { formatDistanceToNow } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+
+interface Post {
+  id: string;
+  user_id: string;
+  content: string | null;
+  media_url: string | null;
+  media_type: string;
+  created_at: string;
+  profile: { name: string; photo_url: string | null; is_verified: boolean };
+  like_count: number;
+  user_liked: boolean;
+}
+
+interface PostScrollViewerProps {
+  userId: string;
+  startIndex?: number;
+  onClose: () => void;
+}
+
+const PostScrollViewer = ({ userId, startIndex = 0, onClose }: PostScrollViewerProps) => {
+  const { user } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [heartAnimId, setHeartAnimId] = useState<string | null>(null);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const lastTapRef = useRef<{ id: string; time: number } | null>(null);
+  const videoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [userId]);
+
+  const fetchPosts = async () => {
+    const { data: rawPosts } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!rawPosts) { setLoading(false); return; }
+
+    const { data: profile } = await supabase.from("profiles").select("name, photo_url, is_verified").eq("id", userId).single();
+    const postIds = rawPosts.map(p => p.id);
+
+    const [{ data: likes }, { data: userLikes }] = await Promise.all([
+      supabase.from("post_likes").select("post_id").in("post_id", postIds),
+      user ? supabase.from("post_likes").select("post_id").in("post_id", postIds).eq("user_id", user.id) : Promise.resolve({ data: [] }),
+    ]);
+
+    const likeCountMap: Record<string, number> = {};
+    (likes || []).forEach((l: any) => { likeCountMap[l.post_id] = (likeCountMap[l.post_id] || 0) + 1; });
+    const userLikedSet = new Set((userLikes || []).map((l: any) => l.post_id));
+
+    setPosts(rawPosts.map(p => ({
+      ...p,
+      profile: { name: profile?.name || "Unknown", photo_url: profile?.photo_url || null, is_verified: profile?.is_verified || false },
+      like_count: likeCountMap[p.id] || 0,
+      user_liked: userLikedSet.has(p.id),
+    })));
+    setLoading(false);
+  };
+
+  // Video autoplay observer
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    videoRefs.current.forEach((video) => {
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // Pause all others
+            videoRefs.current.forEach((v) => { if (v !== video) v.pause(); });
+            video.muted = isMuted;
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      }, { threshold: 0.6 });
+      obs.observe(video);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
+  }, [posts, isMuted]);
+
+  const handleDoubleTap = (post: Post) => {
+    const now = Date.now();
+    if (lastTapRef.current?.id === post.id && now - lastTapRef.current.time < 300) {
+      if (!post.user_liked) triggerLike(post);
+      setHeartAnimId(post.id);
+      setTimeout(() => setHeartAnimId(null), 800);
+      lastTapRef.current = null;
+    } else {
+      lastTapRef.current = { id: post.id, time: now };
+    }
+  };
+
+  const triggerLike = async (post: Post) => {
+    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, user_liked: true, like_count: p.like_count + 1 } : p));
+    await supabase.from("post_likes").insert({ user_id: user!.id, post_id: post.id });
+  };
+
+  const handleLike = async (post: Post) => {
+    if (!user) return;
+    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, user_liked: !p.user_liked, like_count: p.user_liked ? p.like_count - 1 : p.like_count + 1 } : p));
+    if (post.user_liked) {
+      await supabase.from("post_likes").delete().eq("user_id", user.id).eq("post_id", post.id);
+    } else {
+      await supabase.from("post_likes").insert({ user_id: user.id, post_id: post.id });
+    }
+  };
+
+  const handleShare = async (post: Post) => {
+    try {
+      await navigator.share({ text: post.content || "Check this out!", url: window.location.origin });
+    } catch {
+      await navigator.clipboard.writeText(window.location.origin);
+      toast.success("Link copied!");
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-background flex flex-col"
+    >
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
+        <h2 className="font-display text-lg font-bold text-foreground">Posts</h2>
+        <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+          <X className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto snap-y snap-mandatory">
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
+          </div>
+        ) : (
+          posts.filter(p => p.media_url).map(post => (
+            <div key={post.id} className="snap-start min-h-[80vh] border-b border-border">
+              <div className="flex items-center gap-2.5 px-4 py-3">
+                <DefaultAvatar src={post.profile.photo_url} alt={post.profile.name} className="h-8 w-8" />
+                <span className="text-sm font-semibold text-foreground">{post.profile.name}</span>
+                {post.profile.is_verified && <img src={verifiedBadge} alt="V" className="h-3.5 w-3.5" />}
+              </div>
+
+              <div className="relative w-full" onClick={() => handleDoubleTap(post)}>
+                {post.media_type === "video" ? (
+                  <div className="relative">
+                    <video
+                      ref={el => { if (el) videoRefs.current.set(post.id, el); }}
+                      src={post.media_url!}
+                      className="w-full object-contain bg-muted"
+                      style={{ maxHeight: "75vh" }}
+                      loop playsInline preload="metadata"
+                      muted={isMuted}
+                    />
+                    <button
+                      onClick={e => { e.stopPropagation(); setIsMuted(!isMuted); videoRefs.current.forEach(v => { v.muted = !isMuted; }); }}
+                      className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
+                    >
+                      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                    </button>
+                  </div>
+                ) : (
+                  <img src={post.media_url!} alt="" className="w-full max-h-[75vh] object-cover bg-muted" />
+                )}
+
+                <AnimatePresence>
+                  {heartAnimId === post.id && (
+                    <motion.div initial={{ scale: 0, opacity: 1 }} animate={{ scale: 1.2, opacity: 1 }} exit={{ scale: 1.5, opacity: 0 }} transition={{ duration: 0.6 }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <Heart className="h-20 w-20 fill-red-500 text-red-500 drop-shadow-lg" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="px-4 py-2">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => handleLike(post)} className="flex items-center gap-1.5">
+                    <Heart className={`h-5 w-5 transition-all ${post.user_liked ? "fill-destructive text-destructive scale-110" : "text-foreground"}`} />
+                    {post.like_count > 0 && <span className="text-xs font-medium text-foreground">{post.like_count}</span>}
+                  </button>
+                  <button onClick={() => setCommentPostId(post.id)} className="flex items-center gap-1.5">
+                    <MessageCircle className="h-5 w-5 text-foreground" />
+                  </button>
+                  <button onClick={() => handleShare(post)}>
+                    <Share2 className="h-5 w-5 text-foreground" />
+                  </button>
+                </div>
+                {post.content && (
+                  <p className="mt-1 text-sm text-foreground">
+                    <span className="font-semibold">{post.profile.name}</span> {post.content}
+                  </p>
+                )}
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <AnimatePresence>
+        {commentPostId && (
+          <CommentsSheet
+            postId={commentPostId}
+            postOwnerId={posts.find(p => p.id === commentPostId)?.user_id || ""}
+            onClose={() => setCommentPostId(null)}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+export default PostScrollViewer;
