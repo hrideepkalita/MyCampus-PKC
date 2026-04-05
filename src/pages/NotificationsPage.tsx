@@ -18,6 +18,7 @@ interface Notification {
 const typeIcons: Record<string, React.ReactNode> = {
   like: <Heart className="h-4 w-4 text-pink-500" />,
   post_like: <Heart className="h-4 w-4 text-pink-500" />,
+  comment: <MessageCircle className="h-4 w-4 text-primary" />,
   match: <Users className="h-4 w-4 text-primary" />,
   follow: <UserPlus className="h-4 w-4 text-primary" />,
   friend_request: <UserPlus className="h-4 w-4 text-primary" />,
@@ -64,16 +65,15 @@ const NotificationsPage = () => {
 
   const handleNotificationClick = async (notif: Notification) => {
     if (!notif.is_read) {
+      setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
       await supabase.from("notifications").update({ is_read: true }).eq("id", notif.id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
-      );
     }
+
     if (notif.type === "profile_view") return;
 
-    // Post like → redirect to feed (post)
-    if (notif.type === "post_like" && notif.related_id) {
-      navigate(`/feed`);
+    // Post like or comment → feed
+    if (["post_like", "comment"].includes(notif.type) && notif.related_id) {
+      navigate("/feed");
       return;
     }
 
@@ -91,17 +91,11 @@ const NotificationsPage = () => {
 
   const markAllRead = async () => {
     if (!user) return;
-    await supabase
-      .from("notifications")
-      .update({ is_read: true })
-      .eq("user_id", user.id)
-      .eq("is_read", false);
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
   };
 
-  const isClickable = (notif: Notification) => {
-    return notif.type !== "profile_view" && notif.related_id;
-  };
+  const isClickable = (notif: Notification) => notif.type !== "profile_view" && notif.related_id;
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
@@ -113,10 +107,7 @@ const NotificationsPage = () => {
             </button>
             <h1 className="font-display text-lg font-bold text-foreground">Notifications</h1>
           </div>
-          <button
-            onClick={markAllRead}
-            className="flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-primary transition-colors"
-          >
+          <button onClick={markAllRead} className="flex items-center gap-1 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-primary transition-colors">
             <Check className="h-3 w-3" /> Mark all read
           </button>
         </div>
@@ -138,7 +129,7 @@ const NotificationsPage = () => {
             <button
               key={notif.id}
               onClick={() => handleNotificationClick(notif)}
-              className={`w-full text-left rounded-2xl p-4 transition-all ${
+              className={`w-full text-left rounded-2xl p-4 transition-all active:scale-[0.98] ${
                 notif.is_read ? "bg-card" : "bg-primary/5 border border-primary/10"
               } ${isClickable(notif) ? "cursor-pointer" : "cursor-default"}`}
             >
@@ -149,9 +140,7 @@ const NotificationsPage = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-foreground">{notif.title}</p>
-                    {!notif.is_read && (
-                      <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-                    )}
+                    {!notif.is_read && <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />}
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{notif.message}</p>
                   <p className="mt-1 text-[10px] text-muted-foreground/70">{timeAgo(notif.created_at)}</p>

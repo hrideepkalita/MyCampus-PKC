@@ -3,12 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Instagram, UserPlus, UserCheck, Shield, Send, Eye, X } from "lucide-react";
+import { ArrowLeft, Instagram, UserPlus, UserCheck, Shield, Send, Eye, X, ChevronRight } from "lucide-react";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import { toast } from "sonner";
 import verifiedBadge from "@/assets/verified-badge.png";
 import FollowersModal from "@/components/FollowersModal";
 import PhotoGallery from "@/components/PhotoGallery";
+import PostScrollViewer from "@/components/PostScrollViewer";
+import { AnimatePresence } from "framer-motion";
 
 interface Profile {
   id: string;
@@ -22,6 +24,7 @@ interface Profile {
   looking_for: string | null;
   is_verified: boolean;
   instagram: string | null;
+  semester: string | null;
 }
 
 interface GalleryPhoto {
@@ -58,6 +61,7 @@ const ViewProfilePage = () => {
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [friendRequestStatus, setFriendRequestStatus] = useState<string | null>(null);
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
+  const [showPostScroller, setShowPostScroller] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -79,11 +83,11 @@ const ViewProfilePage = () => {
   const fetchProfile = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id, name, age, gender, branch, bio, photo_url, interests, looking_for, instagram, is_verified")
+      .select("id, name, age, gender, branch, bio, photo_url, interests, looking_for, instagram, is_verified, semester")
       .eq("id", id!)
       .maybeSingle();
     if (data) {
-      setProfile({ ...data, interests: (data.interests as string[]) || [], is_verified: (data as any).is_verified ?? false });
+      setProfile({ ...data, interests: (data.interests as string[]) || [], is_verified: (data as any).is_verified ?? false, semester: (data as any).semester || null });
     }
     setLoading(false);
   };
@@ -115,20 +119,10 @@ const ViewProfilePage = () => {
     const { data: recent } = await supabase.from("profile_views").select("id").eq("viewer_id", user.id).eq("viewed_user_id", id).gte("created_at", twentyFourAgo).limit(1);
     if (recent && recent.length > 0) return;
     await supabase.from("profile_views").insert({ viewer_id: user.id, viewed_user_id: id });
-    const { data: viewerProfile } = await supabase.from("profiles").select("branch").eq("id", user.id).single();
-    await supabase.from("notifications").insert({ user_id: id, type: "profile_view", title: "Profile View", message: `Someone from ${viewerProfile?.branch || "your college"} viewed your profile 👀`, related_id: null });
   };
 
-  const checkFollowing = async () => {
-    const { data } = await supabase.from("follows").select("id").eq("follower_id", user!.id).eq("following_id", id!).maybeSingle();
-    setIsFollowing(!!data);
-  };
-
-  const checkTheyFollowMe = async () => {
-    const { data } = await supabase.from("follows").select("id").eq("follower_id", id!).eq("following_id", user!.id).maybeSingle();
-    setTheyFollowMe(!!data);
-  };
-
+  const checkFollowing = async () => { const { data } = await supabase.from("follows").select("id").eq("follower_id", user!.id).eq("following_id", id!).maybeSingle(); setIsFollowing(!!data); };
+  const checkTheyFollowMe = async () => { const { data } = await supabase.from("follows").select("id").eq("follower_id", id!).eq("following_id", user!.id).maybeSingle(); setTheyFollowMe(!!data); };
   const fetchFollowCounts = async () => {
     const [{ count: followers }, { count: following }] = await Promise.all([
       supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", id!),
@@ -159,23 +153,17 @@ const ViewProfilePage = () => {
   const handleFollowToggle = async () => {
     if (!user || !profile) return;
     if (isFollowing) {
-      setIsFollowing(false);
-      setFollowersCount(c => c - 1);
+      setIsFollowing(false); setFollowersCount(c => c - 1);
       await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", profile.id);
     } else {
-      setIsFollowing(true);
-      setFollowersCount(c => c + 1);
+      setIsFollowing(true); setFollowersCount(c => c + 1);
       await supabase.from("follows").insert({ follower_id: user.id, following_id: profile.id });
       const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
       await supabase.from("notifications").insert({ user_id: profile.id, type: "follow", title: `${myProfile?.name || "Someone"} followed you!`, message: `${myProfile?.name || "Someone"} started following you 👋`, related_id: user.id });
     }
   };
 
-  const getFollowLabel = () => {
-    if (isFollowing) return "Following";
-    if (theyFollowMe) return "Follow Back";
-    return "Follow";
-  };
+  const getFollowLabel = () => { if (isFollowing) return "Following"; if (theyFollowMe) return "Follow Back"; return "Follow"; };
 
   const checkFriendRequest = async () => {
     if (!user || !id || user.id === id) return;
@@ -197,6 +185,7 @@ const ViewProfilePage = () => {
   if (!profile) return <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background"><p className="font-display text-lg font-bold text-foreground">Profile not found</p><button onClick={() => navigate(-1)} className="mt-4 rounded-xl bg-primary px-6 py-2 text-sm font-bold text-primary-foreground">Go Back</button></div>;
 
   const isOwnProfile = user?.id === profile.id;
+  const deptSemDisplay = [profile.branch, profile.semester ? `Sem ${profile.semester}` : null].filter(Boolean).join(" • ");
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
@@ -208,7 +197,12 @@ const ViewProfilePage = () => {
 
       {followModal && isOwnProfile && <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />}
 
-      {/* Top bar */}
+      <AnimatePresence>
+        {showPostScroller && (
+          <PostScrollViewer userId={profile.id} onClose={() => setShowPostScroller(false)} />
+        )}
+      </AnimatePresence>
+
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
           <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground">
@@ -226,35 +220,21 @@ const ViewProfilePage = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
             <h2 className="font-display text-2xl font-bold text-white drop-shadow-lg">{profile.name}{profile.age ? `, ${profile.age}` : ""}</h2>
-            <p className="text-sm text-white/90 drop-shadow">{profile.branch || "No branch"}</p>
+            {deptSemDisplay && <p className="text-sm text-white/90 drop-shadow">{deptSemDisplay}</p>}
           </div>
         </div>
 
         {/* Follow counts */}
         <div className="mt-3 flex items-center justify-center gap-6">
-          {isOwnProfile ? (
-            <button onClick={() => setFollowModal("followers")} className="text-center active:opacity-70">
-              <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
-              <p className="text-xs text-muted-foreground">Followers</p>
-            </button>
-          ) : (
-            <div className="text-center">
-              <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
-              <p className="text-xs text-muted-foreground">Followers</p>
-            </div>
-          )}
+          <div className="text-center">
+            <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
+            <p className="text-xs text-muted-foreground">Followers</p>
+          </div>
           <div className="h-8 w-px bg-border" />
-          {isOwnProfile ? (
-            <button onClick={() => setFollowModal("following")} className="text-center active:opacity-70">
-              <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
-              <p className="text-xs text-muted-foreground">Following</p>
-            </button>
-          ) : (
-            <div className="text-center">
-              <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
-              <p className="text-xs text-muted-foreground">Following</p>
-            </div>
-          )}
+          <div className="text-center">
+            <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
+            <p className="text-xs text-muted-foreground">Following</p>
+          </div>
         </div>
 
         {mutualText && <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>}
@@ -262,11 +242,11 @@ const ViewProfilePage = () => {
         {/* Follow + Add Friend */}
         {!isOwnProfile && (
           <div className="mt-3 flex gap-2">
-            <button onClick={handleFollowToggle} className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold active:scale-[0.98] ${isFollowing ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
+            <button onClick={handleFollowToggle} className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold active:scale-[0.98] transition-transform ${isFollowing ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
               {isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
               {getFollowLabel()}
             </button>
-            <button onClick={handleSendFriendRequest} disabled={friendRequestStatus === "pending" || friendRequestStatus === "accepted"} className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold active:scale-[0.98] ${friendRequestStatus === "accepted" ? "bg-accent/20 text-accent" : friendRequestStatus === "pending" ? "bg-muted text-muted-foreground" : "bg-secondary text-secondary-foreground"}`}>
+            <button onClick={handleSendFriendRequest} disabled={friendRequestStatus === "pending" || friendRequestStatus === "accepted"} className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold active:scale-[0.98] transition-transform ${friendRequestStatus === "accepted" ? "bg-accent/20 text-accent" : friendRequestStatus === "pending" ? "bg-muted text-muted-foreground" : "bg-secondary text-secondary-foreground"}`}>
               <Send className="h-4 w-4" />
               {friendRequestStatus === "accepted" ? "Friends" : friendRequestStatus === "pending" ? "Sent" : "Add Friend"}
             </button>
@@ -279,10 +259,15 @@ const ViewProfilePage = () => {
         {/* User Posts Grid */}
         {userPosts.filter(p => p.media_url).length > 0 && (
           <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Posts</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-muted-foreground">Posts</p>
+              <button onClick={() => setShowPostScroller(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
+                View All <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-1">
-              {userPosts.filter(p => p.media_url).map(post => (
-                <div key={post.id} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+              {userPosts.filter(p => p.media_url).slice(0, 6).map(post => (
+                <button key={post.id} onClick={() => setShowPostScroller(true)} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                   {post.media_type === "video" ? (
                     <video src={post.media_url!} className="h-full w-full object-cover" muted />
                   ) : (
@@ -293,7 +278,7 @@ const ViewProfilePage = () => {
                       <Eye className="h-2.5 w-2.5" />
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -325,7 +310,7 @@ const ViewProfilePage = () => {
         )}
 
         {profile.instagram && (
-          <button onClick={() => window.open(`https://instagram.com/${profile.instagram!.replace(/^@/, "")}`, "_blank")} className="mt-3 w-full rounded-2xl bg-card p-4 flex items-center gap-2 text-left hover:bg-muted">
+          <button onClick={() => window.open(`https://instagram.com/${profile.instagram!.replace(/^@/, "")}`, "_blank")} className="mt-3 w-full rounded-2xl bg-card p-4 flex items-center gap-2 text-left hover:bg-muted transition-colors">
             <Instagram className="h-4 w-4 text-secondary" />
             <span className="text-sm text-primary font-medium">{profile.instagram}</span>
           </button>
@@ -338,6 +323,11 @@ const ViewProfilePage = () => {
             <p className="text-xs text-muted-foreground">User ID: <span className="text-foreground font-mono text-[11px]">{profile.id}</span></p>
           </div>
         )}
+
+        {/* Slogan */}
+        <p className="mt-8 mb-4 text-center text-xs text-muted-foreground">
+          Made by PKCian for PKCians ❤️
+        </p>
       </div>
 
       <BottomNav />

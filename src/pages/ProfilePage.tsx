@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import AddPhotoModal from "@/components/AddPhotoModal";
 import FollowersModal from "@/components/FollowersModal";
 import DefaultAvatar from "@/components/DefaultAvatar";
+import PostScrollViewer from "@/components/PostScrollViewer";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
@@ -31,6 +32,7 @@ interface Profile {
   is_verified: boolean;
   instagram: string | null;
   phone: string | null;
+  semester: string | null;
 }
 
 interface GalleryPhoto {
@@ -68,6 +70,7 @@ const ProfilePage = () => {
   const [showAddPhoto, setShowAddPhoto] = useState(false);
   const [showFullGallery, setShowFullGallery] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showPostScroller, setShowPostScroller] = useState(false);
 
   // User posts
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
@@ -79,9 +82,6 @@ const ProfilePage = () => {
 
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const isAdmin = user?.email === ADMIN_EMAIL;
-
-  // Semester field
-  const [semester, setSemester] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -103,6 +103,7 @@ const ProfilePage = () => {
         interests: (data.interests as string[]) || [], looking_for: data.looking_for,
         verified: data.verified, is_verified: (data as any).is_verified ?? false,
         instagram: data.instagram, phone: data.phone,
+        semester: (data as any).semester || null,
       };
       setProfile(p);
       setForm(p);
@@ -153,7 +154,8 @@ const ProfilePage = () => {
       name: form.name, age: form.age, gender: form.gender, branch: form.branch,
       bio: form.bio, interests: form.interests, looking_for: form.looking_for,
       instagram: form.instagram, phone: form.phone, photos: form.photos,
-    }).eq("id", user.id);
+      semester: form.semester,
+    } as any).eq("id", user.id);
     setProfile(form);
     setEditing(false);
     setSaving(false);
@@ -225,9 +227,9 @@ const ProfilePage = () => {
   if (!displayProfile) return null;
   const showVerifyButton = !displayProfile.is_verified && verificationStatus !== "pending";
 
-  // Gallery: show first 5 in horizontal scroll, "More" opens full grid
   const galleryPreview = galleryPhotos.slice(0, 5);
   const allGalleryItems = [...galleryPhotos, ...userPosts.filter(p => p.media_url)];
+  const deptSemDisplay = [displayProfile.branch, displayProfile.semester ? `Sem ${displayProfile.semester}` : null].filter(Boolean).join(" • ");
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
@@ -257,34 +259,24 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* Full Gallery Modal with slide animation */}
+      {/* Post scroll viewer */}
+      <AnimatePresence>
+        {showPostScroller && user && (
+          <PostScrollViewer userId={user.id} onClose={() => setShowPostScroller(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Full Gallery Modal */}
       <AnimatePresence>
         {showFullGallery && (
-          <motion.div
-            className="fixed inset-0 z-50 bg-background flex flex-col"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ y: -50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -50, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between"
-            >
+          <motion.div className="fixed inset-0 z-50 bg-background flex flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} transition={{ duration: 0.3 }} className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-foreground">Gallery</h2>
               <button onClick={() => setShowFullGallery(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
             </motion.div>
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="flex-1 overflow-y-auto p-2"
-            >
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} transition={{ duration: 0.3, delay: 0.1 }} className="flex-1 overflow-y-auto p-2">
               <div className="grid grid-cols-3 gap-1">
                 {allGalleryItems.map((item, idx) => {
                   const isPost = 'media_type' in item;
@@ -340,9 +332,16 @@ const ProfilePage = () => {
 
           <div className="mt-3 flex items-center gap-2">
             {editing ? (
-              <div className="flex gap-2">
-                <input value={form?.name || ""} onChange={e => setForm({ ...form!, name: e.target.value })} className="rounded-lg border border-border bg-card px-2 py-1 text-center font-display text-lg font-bold text-foreground w-32" />
-                <input type="number" value={form?.age || ""} onChange={e => setForm({ ...form!, age: parseInt(e.target.value) || null })} className="rounded-lg border border-border bg-card px-2 py-1 text-center text-lg font-bold text-foreground w-16" placeholder="Age" />
+              <div className="space-y-2">
+                <input value={form?.name || ""} onChange={e => setForm({ ...form!, name: e.target.value })} className="rounded-lg border border-border bg-card px-3 py-2 text-center font-display text-lg font-bold text-foreground w-48" placeholder="Name" />
+                <input type="number" value={form?.age || ""} onChange={e => setForm({ ...form!, age: parseInt(e.target.value) || null })} className="rounded-lg border border-border bg-card px-3 py-2 text-center text-sm text-foreground w-48" placeholder="Age" />
+                <div className="flex gap-2 justify-center">
+                  {["Male", "Female", "Other"].map(g => (
+                    <button key={g} onClick={() => setForm({ ...form!, gender: g })} className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${form?.gender === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground border border-border"}`}>{g}</button>
+                  ))}
+                </div>
+                <input value={form?.branch || ""} onChange={e => setForm({ ...form!, branch: e.target.value })} placeholder="Department (e.g. CSE)" className="rounded-lg border border-border bg-card px-3 py-2 text-center text-sm text-foreground w-48" />
+                <input value={form?.semester || ""} onChange={e => setForm({ ...form!, semester: e.target.value })} placeholder="Semester (e.g. 6th)" className="rounded-lg border border-border bg-card px-3 py-2 text-center text-sm text-foreground w-48" />
               </div>
             ) : (
               <>
@@ -351,22 +350,11 @@ const ProfilePage = () => {
               </>
             )}
           </div>
-          {editing ? (
-            <div className="mt-1 flex gap-2">
-              <input value={form?.branch || ""} onChange={e => setForm({ ...form!, branch: e.target.value })} placeholder="Branch" className="rounded-lg border border-border bg-card px-2 py-1 text-center text-sm text-muted-foreground w-36" />
-              <input value={semester} onChange={e => setSemester(e.target.value)} placeholder="Semester" className="rounded-lg border border-border bg-card px-2 py-1 text-center text-sm text-muted-foreground w-24" />
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">{displayProfile.branch || "Add your branch"}{semester ? ` • Sem ${semester}` : ""}</p>
-          )}
-          {editing ? (
-            <div className="mt-2 flex gap-2">
-              {["Male", "Female", "Other"].map(g => (
-                <button key={g} onClick={() => setForm({ ...form!, gender: g })} className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${form?.gender === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground border border-border"}`}>{g}</button>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-1 text-xs text-muted-foreground">{displayProfile.gender || "Set your gender"}</p>
+          {!editing && (
+            <>
+              {deptSemDisplay && <p className="text-sm text-muted-foreground mt-0.5">{deptSemDisplay}</p>}
+              {displayProfile.gender && <p className="mt-0.5 text-xs text-muted-foreground">{displayProfile.gender}</p>}
+            </>
           )}
         </div>
 
@@ -415,18 +403,23 @@ const ProfilePage = () => {
         {/* Add Gallery Photo */}
         <button
           onClick={() => setShowAddPhoto(true)}
-          className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary"
+          className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-border py-2.5 text-sm font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
         >
           <Camera className="h-4 w-4" /> Add Gallery Photo
         </button>
 
-        {/* User Posts */}
-        {userPosts.length > 0 && (
+        {/* User Posts - clickable to open post scroll viewer */}
+        {userPosts.filter(p => p.media_url).length > 0 && (
           <div className="mt-4">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">My Posts</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-muted-foreground">My Posts</p>
+              <button onClick={() => setShowPostScroller(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
+                View All <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
             <div className="grid grid-cols-3 gap-1">
-              {userPosts.filter(p => p.media_url).map(post => (
-                <div key={post.id} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+              {userPosts.filter(p => p.media_url).slice(0, 6).map(post => (
+                <button key={post.id} onClick={() => setShowPostScroller(true)} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                   {post.media_type === "video" ? (
                     <video src={post.media_url!} className="h-full w-full object-cover" muted />
                   ) : (
@@ -437,7 +430,7 @@ const ProfilePage = () => {
                       <Eye className="h-2.5 w-2.5" />
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -545,6 +538,11 @@ const ProfilePage = () => {
             <Edit className="h-4 w-4" /> Edit Profile
           </button>
         )}
+
+        {/* Slogan */}
+        <p className="mt-8 mb-4 text-center text-xs text-muted-foreground">
+          Made by PKCian for PKCians ❤️
+        </p>
       </div>
 
       <BottomNav />
