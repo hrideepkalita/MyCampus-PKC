@@ -10,7 +10,6 @@ import verifiedBadge from "@/assets/verified-badge.png";
 import FollowersModal from "@/components/FollowersModal";
 import PhotoGallery from "@/components/PhotoGallery";
 import PostScrollViewer from "@/components/PostScrollViewer";
-import { AnimatePresence } from "framer-motion";
 
 interface Profile {
   id: string;
@@ -62,6 +61,7 @@ const ViewProfilePage = () => {
   const [friendRequestStatus, setFriendRequestStatus] = useState<string | null>(null);
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [showPostScroller, setShowPostScroller] = useState(false);
+  const [showFullGallery, setShowFullGallery] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -186,6 +186,7 @@ const ViewProfilePage = () => {
 
   const isOwnProfile = user?.id === profile.id;
   const deptSemDisplay = [profile.branch, profile.semester ? `Sem ${profile.semester}` : null].filter(Boolean).join(" • ");
+  const allItems = [...userPosts.filter(p => p.media_url)];
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
@@ -197,11 +198,46 @@ const ViewProfilePage = () => {
 
       {followModal && isOwnProfile && <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />}
 
-      <AnimatePresence>
-        {showPostScroller && (
-          <PostScrollViewer userId={profile.id} onClose={() => setShowPostScroller(false)} />
-        )}
-      </AnimatePresence>
+      {showPostScroller && (
+        <PostScrollViewer userId={profile.id} onClose={() => setShowPostScroller(false)} />
+      )}
+
+      {/* Full Gallery View */}
+      {showFullGallery && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <h2 className="font-display text-lg font-bold text-foreground">{profile.name}'s Posts</h2>
+            <button onClick={() => setShowFullGallery(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            <div className="grid grid-cols-3 gap-1">
+              {allItems.map(post => (
+                <button key={post.id} onClick={() => setShowPostScroller(true)} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+                  {post.media_type === "video" ? (
+                    <div className="h-full w-full bg-black flex items-center justify-center">
+                      <span className="text-muted-foreground text-xs">▶</span>
+                    </div>
+                  ) : (
+                    <img src={post.media_url!} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  )}
+                  {post.media_type === "video" && (
+                    <div className="absolute bottom-1 left-1 flex items-center gap-0.5 rounded bg-black/50 px-1 py-0.5 text-[9px] text-white">
+                      <Eye className="h-2.5 w-2.5" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            {allItems.length === 0 && (
+              <div className="flex flex-col items-center py-20 text-center">
+                <p className="text-muted-foreground text-sm">No posts yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
@@ -214,7 +250,6 @@ const ViewProfilePage = () => {
       </div>
 
       <div className="mx-auto max-w-md px-4 pt-4">
-        {/* Main photo */}
         <div className="relative aspect-[3/4] max-h-[55vh] w-full overflow-hidden rounded-2xl" onClick={() => profile.photo_url && setSelectedPhoto(profile.photo_url)}>
           <img src={profile.photo_url || "/placeholder.svg"} alt={profile.name} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
@@ -224,7 +259,6 @@ const ViewProfilePage = () => {
           </div>
         </div>
 
-        {/* Follow counts */}
         <div className="mt-3 flex items-center justify-center gap-6">
           <div className="text-center">
             <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
@@ -239,7 +273,6 @@ const ViewProfilePage = () => {
 
         {mutualText && <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>}
 
-        {/* Follow + Add Friend */}
         {!isOwnProfile && (
           <div className="mt-3 flex gap-2">
             <button onClick={handleFollowToggle} className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold active:scale-[0.98] transition-transform ${isFollowing ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground"}`}>
@@ -261,15 +294,17 @@ const ViewProfilePage = () => {
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold text-muted-foreground">Posts</p>
-              <button onClick={() => setShowPostScroller(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
-                View All <ChevronRight className="h-3 w-3" />
+              <button onClick={() => setShowFullGallery(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
+                All <ChevronRight className="h-3 w-3" />
               </button>
             </div>
             <div className="grid grid-cols-3 gap-1">
               {userPosts.filter(p => p.media_url).slice(0, 6).map(post => (
                 <button key={post.id} onClick={() => setShowPostScroller(true)} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                   {post.media_type === "video" ? (
-                    <video src={post.media_url!} className="h-full w-full object-cover" muted />
+                    <div className="h-full w-full bg-black flex items-center justify-center">
+                      <span className="text-muted-foreground text-xs">▶</span>
+                    </div>
                   ) : (
                     <img src={post.media_url!} alt="" className="h-full w-full object-cover" loading="lazy" />
                   )}
@@ -284,7 +319,6 @@ const ViewProfilePage = () => {
           </div>
         )}
 
-        {/* Bio */}
         {profile.bio && (
           <div className="mt-4 rounded-2xl bg-card p-4">
             <p className="text-xs font-semibold text-muted-foreground mb-1">About</p>
@@ -292,7 +326,6 @@ const ViewProfilePage = () => {
           </div>
         )}
 
-        {/* Interests */}
         {profile.interests.length > 0 && (
           <div className="mt-3 rounded-2xl bg-card p-4">
             <p className="text-xs font-semibold text-muted-foreground mb-2">Interests</p>
@@ -316,7 +349,6 @@ const ViewProfilePage = () => {
           </button>
         )}
 
-        {/* Admin Info */}
         {user?.email === "rangiavlog@gmail.com" && (
           <div className="mt-3 rounded-2xl bg-card p-4 border border-accent/30">
             <p className="text-xs font-semibold text-accent mb-2 flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Admin Info</p>
@@ -324,7 +356,6 @@ const ViewProfilePage = () => {
           </div>
         )}
 
-        {/* Slogan */}
         <p className="mt-8 mb-4 text-center text-xs text-muted-foreground">
           Made by PKCian for PKCians ❤️
         </p>

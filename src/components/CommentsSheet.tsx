@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { X, Send, CornerDownRight, Trash2 } from "lucide-react";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface Comment {
   id: string;
@@ -31,6 +30,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
   const [replyTo, setReplyTo] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchComments = useCallback(async () => {
     const { data: raw } = await supabase
@@ -55,7 +55,6 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
       replies: [] as Comment[],
     }));
 
-    // Build tree
     const map = new Map<string, Comment>();
     const roots: Comment[] = [];
     enriched.forEach(c => map.set(c.id, c));
@@ -72,6 +71,11 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
   }, [postId]);
 
   useEffect(() => { fetchComments(); }, [fetchComments]);
+
+  // Focus input on reply
+  useEffect(() => {
+    if (replyTo) inputRef.current?.focus();
+  }, [replyTo]);
 
   const handleSend = async () => {
     if (!text.trim() || !user) return;
@@ -99,10 +103,34 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
       });
     }
 
+    // Notify parent comment author for replies
+    if (replyTo) {
+      const parentComment = findCommentById(comments, replyTo.id);
+      if (parentComment && parentComment.user_id !== user.id) {
+        const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+        await supabase.from("notifications").insert({
+          user_id: parentComment.user_id,
+          type: "comment_reply",
+          title: `${myP?.name || "Someone"} replied to your comment`,
+          message: text.trim().slice(0, 100),
+          related_id: postId,
+        });
+      }
+    }
+
     setText("");
     setReplyTo(null);
     setSending(false);
     fetchComments();
+  };
+
+  const findCommentById = (list: Comment[], id: string): Comment | null => {
+    for (const c of list) {
+      if (c.id === id) return c;
+      const found = findCommentById(c.replies, id);
+      if (found) return found;
+    }
+    return null;
   };
 
   const handleDelete = async (commentId: string) => {
@@ -117,7 +145,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
         <div className="flex-1 min-w-0">
           <div className="rounded-xl bg-muted px-3 py-2">
             <p className="text-xs font-semibold text-foreground">{comment.profile.name}</p>
-            <p className="text-xs text-foreground mt-0.5">{comment.text}</p>
+            <p className="text-xs text-foreground mt-0.5 break-words">{comment.text}</p>
           </div>
           <div className="flex items-center gap-3 mt-1 px-1">
             <span className="text-[10px] text-muted-foreground">
@@ -127,7 +155,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
               Reply
             </button>
             {comment.user_id === user?.id && (
-              <button onClick={() => handleDelete(comment.id)} className="text-[10px] text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={() => handleDelete(comment.id)} className="text-[10px] text-destructive">
                 <Trash2 className="h-3 w-3" />
               </button>
             )}
@@ -141,29 +169,23 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
   const totalCount = comments.reduce((acc, c) => acc + 1 + c.replies.length, 0);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm"
       onClick={onClose}
     >
-      <motion.div
-        initial={{ y: "100%" }}
-        animate={{ y: 0 }}
-        exit={{ y: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-md rounded-t-2xl bg-background max-h-[75vh] flex flex-col"
+      <div
+        className="w-full max-w-md rounded-t-2xl bg-background flex flex-col"
+        style={{ maxHeight: "75vh" }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
           <h3 className="font-display text-sm font-bold text-foreground">Comments ({totalCount})</h3>
           <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
             <X className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-2">
+        <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -177,7 +199,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
 
         {/* Reply indicator */}
         {replyTo && (
-          <div className="px-4 py-1.5 bg-muted/50 flex items-center gap-2 border-t border-border">
+          <div className="px-4 py-1.5 bg-muted/50 flex items-center gap-2 border-t border-border flex-shrink-0">
             <CornerDownRight className="h-3 w-3 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Replying to <span className="font-semibold text-foreground">{replyTo.name}</span></span>
             <button onClick={() => setReplyTo(null)} className="ml-auto">
@@ -186,21 +208,23 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
           </div>
         )}
 
-        {/* Input */}
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
+        {/* Input - always visible */}
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-border flex-shrink-0 bg-background">
           <input
+            ref={inputRef}
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder="Add a comment..."
-            className="flex-1 rounded-full bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
+            placeholder={replyTo ? `Reply to ${replyTo.name}...` : "Add a comment..."}
+            className="flex-1 rounded-full bg-muted px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+            autoComplete="off"
           />
-          <button onClick={handleSend} disabled={!text.trim() || sending} className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50">
+          <button onClick={handleSend} disabled={!text.trim() || sending} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-50 flex-shrink-0">
             <Send className="h-4 w-4" />
           </button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 

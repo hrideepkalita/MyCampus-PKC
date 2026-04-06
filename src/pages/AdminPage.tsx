@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, X, Shield, Users } from "lucide-react";
 import DefaultAvatar from "@/components/DefaultAvatar";
+import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
@@ -80,11 +81,10 @@ const AdminPage = () => {
 
   const handleAction = async (req: VerificationRequest, action: "approved" | "rejected") => {
     setProcessing(req.id);
-
-    // Optimistic: remove from list immediately
     setRequests(prev => prev.filter(r => r.id !== req.id));
 
     try {
+      // Update verification request status
       const { error: reqError } = await supabase
         .from("verification_requests")
         .update({ status: action })
@@ -92,16 +92,18 @@ const AdminPage = () => {
       if (reqError) throw reqError;
 
       if (action === "approved") {
+        // Update profile - set both fields
         const { error: profileError } = await supabase
           .from("profiles")
           .update({ is_verified: true, verified: "verified" })
           .eq("id", req.user_id);
         if (profileError) throw profileError;
 
-        // Update local users list
+        // Immediately update local users list
         setAllUsers(prev => prev.map(u => u.id === req.user_id ? { ...u, is_verified: true } : u));
       }
 
+      // Send notification
       await supabase.from("notifications").insert({
         user_id: req.user_id,
         type: "verification",
@@ -114,7 +116,7 @@ const AdminPage = () => {
       toast.success(`Request ${action}!`);
     } catch (err: any) {
       toast.error("Failed: " + err.message);
-      fetchRequests(); // Revert optimistic update
+      fetchRequests();
     }
     setProcessing(null);
   };
@@ -147,7 +149,6 @@ const AdminPage = () => {
       </div>
 
       <div className="mx-auto max-w-md px-4 pt-3">
-        {/* Tabs */}
         <div className="flex gap-1 mb-4">
           <button onClick={() => setTab("verify")} className={`flex-1 rounded-full py-2 text-xs font-semibold transition-colors ${tab === "verify" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
             Verification {requests.length > 0 && `(${requests.length})`}
@@ -183,7 +184,7 @@ const AdminPage = () => {
                       </div>
                       <div>
                         <p className="font-display text-sm font-bold text-foreground">{req.profile_name}</p>
-                        <p className="text-[10px] text-muted-foreground">{new Date(req.created_at).toLocaleDateString()}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono">{req.user_id.slice(0, 8)}...</p>
                       </div>
                     </div>
                     <div className="w-full aspect-video overflow-hidden rounded-xl bg-muted mb-3 cursor-pointer" onClick={() => setPreviewImage(req.id_card_image_url)}>
@@ -210,7 +211,7 @@ const AdminPage = () => {
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-semibold text-foreground truncate">{u.name}</p>
-                    {u.is_verified && <span className="text-[10px] text-accent">✅</span>}
+                    {u.is_verified && <img src={verifiedBadge} alt="Verified" className="h-4 w-4" />}
                   </div>
                   <p className="text-[10px] text-muted-foreground font-mono truncate">{u.id}</p>
                 </div>
