@@ -14,7 +14,6 @@ import AddPhotoModal from "@/components/AddPhotoModal";
 import FollowersModal from "@/components/FollowersModal";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import PostScrollViewer from "@/components/PostScrollViewer";
-import { motion, AnimatePresence } from "framer-motion";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
 
@@ -65,17 +64,14 @@ const ProfilePage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const verifyInputRef = useRef<HTMLInputElement>(null);
 
-  // Gallery
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [showAddPhoto, setShowAddPhoto] = useState(false);
   const [showFullGallery, setShowFullGallery] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showPostScroller, setShowPostScroller] = useState(false);
 
-  // User posts
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
 
-  // Follow counts & modal
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [followModal, setFollowModal] = useState<"followers" | "following" | null>(null);
@@ -228,7 +224,7 @@ const ProfilePage = () => {
   const showVerifyButton = !displayProfile.is_verified && verificationStatus !== "pending";
 
   const galleryPreview = galleryPhotos.slice(0, 5);
-  const allGalleryItems = [...galleryPhotos, ...userPosts.filter(p => p.media_url)];
+  const allGalleryItems = [...galleryPhotos.map(g => ({ ...g, _type: "gallery" as const })), ...userPosts.filter(p => p.media_url).map(p => ({ ...p, _type: "post" as const }))];
   const deptSemDisplay = [displayProfile.branch, displayProfile.semester ? `Sem ${displayProfile.semester}` : null].filter(Boolean).join(" • ");
 
   return (
@@ -260,63 +256,61 @@ const ProfilePage = () => {
       )}
 
       {/* Post scroll viewer */}
-      <AnimatePresence>
-        {showPostScroller && user && (
-          <PostScrollViewer userId={user.id} onClose={() => setShowPostScroller(false)} />
-        )}
-      </AnimatePresence>
+      {showPostScroller && user && (
+        <PostScrollViewer userId={user.id} onClose={() => setShowPostScroller(false)} />
+      )}
 
-      {/* Full Gallery Modal */}
-      <AnimatePresence>
-        {showFullGallery && (
-          <motion.div className="fixed inset-0 z-50 bg-background flex flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} transition={{ duration: 0.3 }} className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
-              <h2 className="font-display text-lg font-bold text-foreground">Gallery</h2>
-              <button onClick={() => setShowFullGallery(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </motion.div>
-            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} transition={{ duration: 0.3, delay: 0.1 }} className="flex-1 overflow-y-auto p-2">
-              <div className="grid grid-cols-3 gap-1">
-                {allGalleryItems.map((item, idx) => {
-                  const isPost = 'media_type' in item;
-                  const url = isPost ? (item as UserPost).media_url : (item as GalleryPhoto).image_url;
-                  const isVideo = isPost && (item as UserPost).media_type === "video";
-                  return (
-                    <div key={idx} className="relative aspect-square overflow-hidden rounded-lg bg-muted group">
-                      {isVideo ? (
-                        <video src={url!} className="h-full w-full object-cover" muted />
-                      ) : (
-                        <button onClick={() => setSelectedImage(url!)} className="w-full h-full">
-                          <img src={url!} alt="" className="h-full w-full object-cover" loading="lazy" />
-                        </button>
-                      )}
-                      {isVideo && (
-                        <div className="absolute bottom-1 left-1 flex items-center gap-0.5 rounded bg-black/50 px-1 py-0.5 text-[9px] text-white">
-                          <Eye className="h-2.5 w-2.5" /> Video
-                        </div>
-                      )}
-                      {!isPost && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteGalleryPhoto((item as GalleryPhoto).id); }}
-                          className="absolute top-1 right-1 h-6 w-6 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+      {/* Full Gallery View */}
+      {showFullGallery && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <h2 className="font-display text-lg font-bold text-foreground">Gallery</h2>
+            <button onClick={() => setShowFullGallery(false)} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            <div className="grid grid-cols-3 gap-1">
+              {allGalleryItems.map((item, idx) => {
+                const isPost = item._type === "post";
+                const url = isPost ? (item as any).media_url : (item as any).image_url;
+                const isVideo = isPost && (item as any).media_type === "video";
+                return (
+                  <div key={idx} className="relative aspect-square overflow-hidden rounded-lg bg-muted group">
+                    {isVideo ? (
+                      <div className="h-full w-full bg-black flex items-center justify-center">
+                        <span className="text-muted-foreground text-xs">▶</span>
+                      </div>
+                    ) : (
+                      <button onClick={() => setSelectedImage(url!)} className="w-full h-full">
+                        <img src={url!} alt="" className="h-full w-full object-cover" loading="lazy" />
+                      </button>
+                    )}
+                    {isVideo && (
+                      <div className="absolute bottom-1 left-1 flex items-center gap-0.5 rounded bg-black/50 px-1 py-0.5 text-[9px] text-white">
+                        <Eye className="h-2.5 w-2.5" /> Video
+                      </div>
+                    )}
+                    {!isPost && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteGalleryPhoto((item as GalleryPhoto).id); }}
+                        className="absolute top-1 right-1 h-6 w-6 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {allGalleryItems.length === 0 && (
+              <div className="flex flex-col items-center py-20 text-center">
+                <p className="text-muted-foreground text-sm">No photos or posts yet</p>
               </div>
-              {allGalleryItems.length === 0 && (
-                <div className="flex flex-col items-center py-20 text-center">
-                  <p className="text-muted-foreground text-sm">No photos or posts yet</p>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto max-w-md px-4 pt-6">
         <div className="flex flex-col items-center">
@@ -371,15 +365,15 @@ const ProfilePage = () => {
           </button>
         </div>
 
-        {/* Gallery - horizontal scroll of 5 photos + More button */}
-        {(galleryPreview.length > 0 || userPosts.some(p => p.media_url)) && (
-          <div className="mt-4">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-muted-foreground">Gallery</p>
-              <button onClick={() => setShowFullGallery(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
-                More <ChevronRight className="h-3 w-3" />
-              </button>
-            </div>
+        {/* Gallery - horizontal preview + All button */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-muted-foreground">Gallery</p>
+            <button onClick={() => setShowFullGallery(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
+              All <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+          {galleryPreview.length > 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {galleryPreview.map(photo => (
                 <div key={photo.id} className="relative flex-shrink-0 w-[45vw] max-w-[180px] group">
@@ -397,8 +391,10 @@ const ProfilePage = () => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-muted-foreground py-2">No gallery photos yet</p>
+          )}
+        </div>
 
         {/* Add Gallery Photo */}
         <button
@@ -408,7 +404,7 @@ const ProfilePage = () => {
           <Camera className="h-4 w-4" /> Add Gallery Photo
         </button>
 
-        {/* User Posts - clickable to open post scroll viewer */}
+        {/* User Posts Grid */}
         {userPosts.filter(p => p.media_url).length > 0 && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-2">
@@ -421,7 +417,9 @@ const ProfilePage = () => {
               {userPosts.filter(p => p.media_url).slice(0, 6).map(post => (
                 <button key={post.id} onClick={() => setShowPostScroller(true)} className="relative aspect-square overflow-hidden rounded-lg bg-muted">
                   {post.media_type === "video" ? (
-                    <video src={post.media_url!} className="h-full w-full object-cover" muted />
+                    <div className="h-full w-full bg-black flex items-center justify-center">
+                      <span className="text-muted-foreground text-xs">▶</span>
+                    </div>
                   ) : (
                     <img src={post.media_url!} alt="" className="h-full w-full object-cover" loading="lazy" />
                   )}
@@ -539,7 +537,6 @@ const ProfilePage = () => {
           </button>
         )}
 
-        {/* Slogan */}
         <p className="mt-8 mb-4 text-center text-xs text-muted-foreground">
           Made by PKCian for PKCians ❤️
         </p>
