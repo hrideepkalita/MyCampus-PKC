@@ -171,22 +171,22 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-foreground/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         className="w-full max-w-md rounded-t-2xl bg-background flex flex-col"
-        style={{ maxHeight: "75vh" }}
+        style={{ maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">       
           <h3 className="font-display text-sm font-bold text-foreground">Comments ({totalCount})</h3>
           <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
             <X className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-2 min-h-0">
+          <div className="flex-1 overflow-y-auto px-4 py-2 pb-20 min-h-0">
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -210,7 +210,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
         )}
 
         {/* Input - always visible */}
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-border flex-shrink-0 bg-background pb-[calc(12px+env(safe-area-inset-bottom))]">
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-border flex-shrink-0 bg-background pb-[calc(60px+env(safe-area-inset-bottom))]">
           <input
             ref={inputRef}
             value={text}
