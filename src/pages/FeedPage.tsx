@@ -43,24 +43,54 @@ const FeedPost = memo(({
   onNavigate: (path: string) => void; activeVideoId: string | null;
   onVideoVisible: (id: string, el: HTMLDivElement) => void; onToggleMute: () => void;
 }) => {
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [heartAnim, setHeartAnim] = useState(false);
+  const [comment, setComment] = useState("");
+  const [posting, setPosting] = useState(false); // ✅ prevent spam clicks
+
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastTapRef = useRef<number>(0);
+
   const isVideo = post.media_type === "video";
   const isActive = activeVideoId === post.id;
 
-  // Register video container for intersection observing
+  const handlePostComment = async () => {
+    if (!comment.trim() || !userId || posting) return;
+
+    try {
+      setPosting(true);
+
+      const { error } = await supabase.from("comments").insert({
+        post_id: post.id,
+        user_id: userId,
+        content: comment.trim(),
+        parent_id: null
+      });
+
+      if (error) throw error;
+
+      setComment("");
+      onComment(post.id);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to post comment");
+    } finally {
+      setPosting(false);
+    }
+  };
+
   useEffect(() => {
     if (isVideo && containerRef.current) {
       onVideoVisible(post.id, containerRef.current);
     }
   }, [isVideo, post.id, onVideoVisible]);
 
-  // Control video play/pause based on activeVideoId
   useEffect(() => {
     if (!videoRef.current || !isVideo) return;
+
     if (isActive) {
       videoRef.current.muted = isMuted;
       videoRef.current.play().catch(() => {});
@@ -83,77 +113,34 @@ const FeedPost = memo(({
 
   return (
     <div className="border-b border-border">
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <button onClick={() => onNavigate(`/profile/${post.user_id}`)} className="flex items-center gap-2.5">
           <DefaultAvatar src={post.profile.photo_url} alt={post.profile.name} className="h-9 w-9" />
           <div>
             <div className="flex items-center gap-1">
-              <span className="text-sm font-semibold text-foreground">{post.profile.name}</span>
-              {post.profile.is_verified && <img src={verifiedBadge} alt="V" className="h-3.5 w-3.5" />}
+              <span className="text-sm font-semibold">{post.profile.name}</span>
+              {post.profile.is_verified && <img src={verifiedBadge} className="h-3.5 w-3.5" />}
             </div>
             <span className="text-[10px] text-muted-foreground">
               {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
             </span>
           </div>
         </button>
-        <div className="relative">
-          <button onClick={() => setMenuOpen(!menuOpen)} className="p-1">
-            <MoreVertical className="h-4 w-4 text-muted-foreground" />
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-8 z-20 w-36 rounded-xl bg-card border border-border shadow-lg overflow-hidden">
-              {post.user_id === userId && (
-                <>
-                  <button onClick={() => { onEdit(post); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted">
-                    <Edit className="h-3.5 w-3.5" /> Edit
-                  </button>
-                  <button onClick={() => { onDelete(post.id); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-destructive hover:bg-muted">
-                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                  </button>
-                </>
-              )}
-              <button onClick={() => { onShare(post); setMenuOpen(false); }} className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted">
-                <Share2 className="h-3.5 w-3.5" /> Share
-              </button>
-            </div>
-          )}
-        </div>
+
+        <button onClick={() => setMenuOpen(!menuOpen)}>
+          <MoreVertical className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Media */}
       {post.media_url && (
-        <div ref={containerRef} className="relative w-full" onClick={handleTap}>
+        <div ref={containerRef} onClick={handleTap}>
           {isVideo ? (
-            isActive ? (
-              <div className="relative">
-                <video
-                  ref={videoRef}
-                  src={post.media_url}
-                  className="w-full object-contain bg-black"
-                  style={{ maxHeight: "85vh" }}
-                  loop muted={isMuted} playsInline preload="none"
-                />
-                <button
-                  onClick={e => { e.stopPropagation(); onToggleMute(); }}
-                  className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white"
-                >
-                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-              </div>
-            ) : (
-              <div className="relative w-full bg-black flex items-center justify-center" style={{ minHeight: "300px", maxHeight: "85vh" }}>
-                <div className="text-muted-foreground text-xs">▶ Video</div>
-              </div>
-            )
+            <video ref={videoRef} src={post.media_url} className="w-full" muted={isMuted} />
           ) : (
-            <img src={post.media_url} alt="" className="w-full max-h-[70vh] object-cover bg-muted" loading="lazy" />
-          )}
-
-          {heartAnim && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-ping">
-              <Heart className="h-20 w-20 fill-red-500 text-red-500 drop-shadow-lg" />
-            </div>
+            <img src={post.media_url} className="w-full" />
           )}
         </div>
       )}
@@ -161,42 +148,50 @@ const FeedPost = memo(({
       {/* Actions */}
       <div className="px-4 py-2">
         <div className="flex items-center gap-4">
-          <button onClick={() => onLike(post)} className="flex items-center gap-1.5 active:scale-90 transition-transform">
-            <Heart className={`h-5 w-5 transition-all ${post.user_liked ? "fill-destructive text-destructive scale-110" : "text-foreground"}`} />
-            {post.like_count > 0 && <span className="text-xs font-medium text-foreground">{post.like_count}</span>}
+          <button onClick={() => onLike(post)} className="flex items-center gap-1.5">
+            <Heart className={`h-5 w-5 ${post.user_liked ? "fill-red-500 text-red-500" : ""}`} />
+            {post.like_count > 0 && <span className="text-xs">{post.like_count}</span>}
           </button>
-          <button onClick={() => onComment(post.id)} className="flex items-center gap-1.5 active:scale-90 transition-transform">
-            <MessageCircle className="h-5 w-5 text-foreground" />
-            {post.comment_count > 0 && <span className="text-xs font-medium text-foreground">{post.comment_count}</span>}
+
+          <button onClick={() => onComment(post.id)} className="flex items-center gap-1.5">
+            <MessageCircle className="h-5 w-5" />
+            {post.comment_count > 0 && <span className="text-xs">{post.comment_count}</span>}
           </button>
-          <button onClick={() => onShare(post)} className="active:scale-90 transition-transform">
-            <Share2 className="h-5 w-5 text-foreground" />
+
+          <button onClick={() => onShare(post)}>
+            <Share2 className="h-5 w-5" />
           </button>
         </div>
+
         {post.content && (
-          <p className="mt-1 text-sm text-foreground">
+          <p className="mt-1 text-sm">
             <span className="font-semibold">{post.profile.name}</span> {post.content}
           </p>
         )}
-        {post.comment_count > 0 && (
-          <button onClick={() => onComment(post.id)} className="mt-1 text-xs text-muted-foreground">
-            View all {post.comment_count} comments
-          </button>
-        )}
+
+        {/* COMMENT INPUT */}
         <div className="mt-3 flex items-center gap-2">
-  <input
-    type="text"
-    placeholder="Write a comment..."
-    className="flex-1 rounded-full border border-border bg-card px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-  />
-  <button className="text-primary text-sm font-semibold">
-    Post
-  </button>
-</div>
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Write a comment..."
+            className="flex-1 rounded-full border px-4 py-2 text-sm"
+          />
+
+          <button
+            onClick={handlePostComment}
+            disabled={posting}
+            className="text-primary text-sm font-semibold disabled:opacity-50"
+          >
+            {posting ? "..." : "Post"}
+          </button>
+        </div>
       </div>
     </div>
   );
 });
+
 FeedPost.displayName = "FeedPost";
 
 /* ── Main Feed ── */
