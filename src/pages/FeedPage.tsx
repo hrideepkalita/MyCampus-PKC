@@ -320,7 +320,7 @@ const FeedPage = () => {
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-  
+  const observerRef = useRef<HTMLDivElement>(null);
   const videoContainers = useRef<Map<string, HTMLDivElement>>(new Map());
   const ioRef = useRef<IntersectionObserver | null>(null);
 
@@ -371,8 +371,17 @@ const FeedPage = () => {
 
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
-  // Infinite scroll removed
- 
+  // Infinite scroll
+  useEffect(() => {
+    if (!observerRef.current || !hasMore) return;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !loading && hasMore) {
+        fetchPosts(posts.length, true);
+      }
+    }, { threshold: 0.5 });
+    obs.observe(observerRef.current);
+    return () => obs.disconnect();
+  }, [posts.length, loading, hasMore, fetchPosts]);
 
   // Single video intersection observer - only one video active
   useEffect(() => {
@@ -499,65 +508,56 @@ const FeedPage = () => {
           onClose={() => setCommentPostId(null)}
         />
       )}
-    <div className="mx-auto max-w-md">
-  <Virtuoso
-    data={posts}
-    endReached={() => {
-      if (!loading && hasMore) {
-        fetchPosts(posts.length, true);
-      }
-    }}
-    itemContent={(index, post) => (
-      editingPost === post.id ? (
-        <div className="border-b border-border px-4 py-3">
-          <div className="flex gap-2">
-            <input
-              value={editCaption}
-              onChange={e => setEditCaption(e.target.value)}
-              className="flex-1 rounded-lg border border-border bg-card px-2 py-1 text-sm text-foreground"
+
+      <div className="mx-auto max-w-md">
+        {posts.map(post => (
+          editingPost === post.id ? (
+            <div key={post.id} className="border-b border-border px-4 py-3">
+              <div className="flex gap-2">
+                <input value={editCaption} onChange={e => setEditCaption(e.target.value)} className="flex-1 rounded-lg border border-border bg-card px-2 py-1 text-sm text-foreground" />
+                <button onClick={() => handleEditSave(post.id)} className="rounded-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">Save</button>
+                <button onClick={() => setEditingPost(null)} className="text-xs text-muted-foreground">Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <FeedPost
+              key={post.id}
+              post={post}
+              userId={user?.id}
+              isMuted={isMuted}
+              activeVideoId={activeVideoId}
+              onDoubleTap={triggerLike}
+              onLike={handleLike}
+              onComment={setCommentPostId}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+              onShare={handleShare}
+              onNavigate={handleNavigate}
+              onVideoVisible={registerVideoContainer}
+              onToggleMute={toggleMute}
             />
-            <button
-              onClick={() => handleEditSave(post.id)}
-              className="rounded-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setEditingPost(null)}
-              className="text-xs text-muted-foreground"
-            >
-              Cancel
+          )
+        ))}
+
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
+          </div>
+        )}
+
+        {!loading && posts.length === 0 && (
+          <div className="flex flex-col items-center py-20 text-center px-4">
+            <span className="text-5xl">📸</span>
+            <p className="mt-4 font-display text-lg font-bold text-foreground">No posts yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Be the first to share something!</p>
+            <button onClick={() => setShowCreate(true)} className="mt-4 rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground">
+              Create Post
             </button>
           </div>
-        </div>
-      ) : (
-        <FeedPost
-          post={post}
-          userId={user?.id}
-          isMuted={isMuted}
-          activeVideoId={activeVideoId}
-          onDoubleTap={triggerLike}
-          onLike={handleLike}
-          onComment={setCommentPostId}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          onShare={handleShare}
-          onNavigate={handleNavigate}
-          onVideoVisible={registerVideoContainer}
-          onToggleMute={toggleMute}
-        />
-      )
-    )}
-    style={{ height: "100%" }}
-    increaseViewportBy={500}
-  />
+        )}
 
-  {loading && (
-    <div className="flex items-center justify-center py-4">
-      <div className="h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
-    </div>
-  )}
-</div>
+        {hasMore && <div ref={observerRef} className="h-10" />}
+      </div>
 
       <BottomNav />
     </div>
