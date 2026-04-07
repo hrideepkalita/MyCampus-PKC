@@ -56,31 +56,38 @@ const FeedPost = memo(({
   const isVideo = post.media_type === "video";
   const isActive = activeVideoId === post.id;
 
-  const handlePostComment = async () => {
-    if (!comment.trim() || !userId || posting) return;
+ const handlePostComment = async () => {
+  if (!comment.trim()) return;
 
-    try {
-      setPosting(true);
+  try {
+    const { data: userData } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from("comments").insert({
-        post_id: post.id,
-        user_id: userId,
-        content: comment.trim(),
-        parent_id: null
-      });
-
-      if (error) throw error;
-
-      setComment("");
-      onComment(post.id);
-
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to post comment");
-    } finally {
-      setPosting(false);
+    if (!userData?.user) {
+      toast.error("Login required");
+      return;
     }
-  };
+
+    const { error } = await supabase.from("comments").insert({
+      post_id: post.id,
+      user_id: userData.user.id,
+      content: comment.trim(),
+      parent_id: null
+    });
+
+    if (error) {
+      console.error(error);
+      toast.error(error.message);
+      return;
+    }
+
+    setComment("");
+    onComment(post.id);
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to post comment");
+  }
+};
 
   useEffect(() => {
     if (isVideo && containerRef.current) {
@@ -176,7 +183,7 @@ const FeedPost = memo(({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Write a comment..."
-            className="flex-1 rounded-full border px-4 py-2 text-sm"
+            className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           />
 
           <button
