@@ -312,6 +312,7 @@ const FeedPage = () => {
   const { enabled: heartsEnabled, toggle: toggleHearts } = useFloatingHearts();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(6);
   const [hasMore, setHasMore] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [editingPost, setEditingPost] = useState<string | null>(null);
@@ -365,6 +366,7 @@ const FeedPage = () => {
     });
 
     setPosts(prev => append ? [...prev, ...enriched] : enriched);
+    setVisibleCount(6); 
     setLoading(false);
   }, [user]);
 
@@ -381,7 +383,20 @@ const FeedPage = () => {
     obs.observe(observerRef.current);
     return () => obs.disconnect();
   }, [posts.length, loading, hasMore, fetchPosts]);
+  // scroll loader useeffect
+ useEffect(() => {
+  const handleScroll = () => {
+    const scrollBottom =
+      window.innerHeight + window.scrollY >= document.body.offsetHeight - 500;
 
+    if (scrollBottom && visibleCount < posts.length) {
+      setVisibleCount((prev) => prev + 5);
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll);
+  return () => window.removeEventListener("scroll", handleScroll);
+}, [posts.length, visibleCount]);
   // Single video intersection observer - only one video active
   useEffect(() => {
     if (ioRef.current) ioRef.current.disconnect();
@@ -507,36 +522,50 @@ const FeedPage = () => {
           onClose={() => setCommentPostId(null)}
         />
       )}
-
       <div className="mx-auto max-w-md">
-        {posts.map(post => (
-          editingPost === post.id ? (
-            <div key={post.id} className="border-b border-border px-4 py-3">
-              <div className="flex gap-2">
-                <input value={editCaption} onChange={e => setEditCaption(e.target.value)} className="flex-1 rounded-lg border border-border bg-card px-2 py-1 text-sm text-foreground" />
-                <button onClick={() => handleEditSave(post.id)} className="rounded-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">Save</button>
-                <button onClick={() => setEditingPost(null)} className="text-xs text-muted-foreground">Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <FeedPost
-              key={post.id}
-              post={post}
-              userId={user?.id}
-              isMuted={isMuted}
-              activeVideoId={activeVideoId}
-              onDoubleTap={triggerLike}
-              onLike={handleLike}
-              onComment={setCommentPostId}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-              onShare={handleShare}
-              onNavigate={handleNavigate}
-              onVideoVisible={registerVideoContainer}
-              onToggleMute={toggleMute}
-            />
-          )
-        ))}
+  {posts.slice(0, visibleCount).map((post) => (
+    editingPost === post.id ? (
+      <div key={post.id} className="border-b border-border px-4 py-3">
+        <div className="flex gap-2">
+          <input
+            value={editCaption}
+            onChange={(e) => setEditCaption(e.target.value)}
+            className="flex-1 rounded-lg border border-border bg-card px-2 py-1 text-sm text-foreground"
+          />
+          <button
+            onClick={() => handleEditSave(post.id)}
+            className="rounded-lg bg-primary px-3 py-1 text-xs font-bold text-primary-foreground"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => setEditingPost(null)}
+            className="text-xs text-muted-foreground"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ) : (
+      <FeedPost
+        key={post.id}
+        post={post}
+        userId={user?.id}
+        isMuted={isMuted}
+        activeVideoId={activeVideoId}
+        onDoubleTap={triggerLike}
+        onLike={handleLike}
+        onComment={setCommentPostId}
+        onDelete={handleDelete}
+        onEdit={handleEdit}
+        onShare={handleShare}
+        onNavigate={handleNavigate}
+        onVideoVisible={registerVideoContainer}
+        onToggleMute={toggleMute}
+      />
+    )
+  ))}
+</div>
 
         {loading && (
           <div className="flex items-center justify-center py-8">
