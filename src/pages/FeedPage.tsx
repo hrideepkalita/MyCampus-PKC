@@ -123,20 +123,32 @@ const FeedPost = memo(({
 
       {/* Header */}
      
-<div className="flex items-center justify-between px-4 py-3">
+    {/* Header */}
+<div className="relative flex items-center justify-between px-4 py-3">
 
-  {/* LEFT SIDE (NOT FULL BUTTON ANYMORE) */}
+  {/* LEFT SIDE */}
   <div className="flex items-center gap-2.5">
     <button
       onClick={() => onNavigate(`/profile/${post.user_id}`)}
       className="flex items-center gap-2.5 shrink-0"
     >
-      <DefaultAvatar src={post.profile.photo_url} alt={post.profile.name} className="h-9 w-9" />
+      <DefaultAvatar
+        src={post.profile.photo_url}
+        alt={post.profile.name}
+        className="h-9 w-9"
+      />
+
       <div>
         <div className="flex items-center gap-1">
-          <span className="text-sm font-semibold">{post.profile.name}</span>
-          {post.profile.is_verified && <img src={verifiedBadge} className="h-3.5 w-3.5" />}
+          <span className="text-sm font-semibold">
+            {post.profile.name}
+          </span>
+
+          {post.profile.is_verified && (
+            <img src={verifiedBadge} className="h-3.5 w-3.5" />
+          )}
         </div>
+
         <span className="text-[10px] text-muted-foreground">
           {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
         </span>
@@ -144,7 +156,7 @@ const FeedPost = memo(({
     </button>
   </div>
 
-  {/* RIGHT SIDE (FORCED ABOVE) */}
+  {/* RIGHT SIDE */}
   <button
     onClick={(e) => {
       e.stopPropagation();
@@ -154,6 +166,48 @@ const FeedPost = memo(({
   >
     <MoreVertical className="h-4 w-4" />
   </button>
+
+  {/* MENU */}
+  {menuOpen && (
+    <div className="absolute right-4 top-12 w-32 bg-card border border-border rounded-lg shadow-lg z-50">
+      {userId === post.user_id ? (
+        <>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit(post);
+              setMenuOpen(false);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+          >
+            <Edit className="h-4 w-4" /> Edit
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(post.id);
+              setMenuOpen(false);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-muted"
+          >
+            <Trash2 className="h-4 w-4" /> Delete
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onShare(post);
+            setMenuOpen(false);
+          }}
+          className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+        >
+          <Share2 className="h-4 w-4" /> Share
+        </button>
+      )}
+    </div>
+  )}
 
 </div>
       {/* Media */}
