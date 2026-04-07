@@ -210,7 +210,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
         )}
 
         {/* Input - always visible */}
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-border flex-shrink-0 bg-background">
+        <div className="flex items-center gap-2 px-4 py-3 border-t border-border flex-shrink-0 bg-background pb-[calc(12px+env(safe-area-inset-bottom))]">
           <input
             ref={inputRef}
             value={text}
