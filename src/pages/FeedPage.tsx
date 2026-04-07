@@ -212,7 +212,7 @@ const FeedPost = memo(({
 
 </div>
       {/* Media */}
-     {post.media_url && (
+   {post.media_url && (
   <div
     ref={containerRef}
     className="relative w-full bg-black overflow-hidden"
@@ -222,7 +222,7 @@ const FeedPost = memo(({
         <video
           ref={videoRef}
           src={post.media_url}
-          className="w-full aspect-square object-cover"
+          className="w-full max-h-[75vh] object-contain bg-black"
           muted={isMuted}
           playsInline
           preload="metadata"
@@ -247,7 +247,7 @@ const FeedPost = memo(({
     ) : (
       <img
         src={post.media_url}
-        className="w-full aspect-square object-cover"
+        className="w-full max-h-[75vh] object-contain bg-black"
         loading="lazy"
         decoding="async"
         onClick={handleTap}
