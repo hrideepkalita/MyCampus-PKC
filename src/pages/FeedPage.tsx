@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
-import { Virtuoso } from "react-virtuoso";
 import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
