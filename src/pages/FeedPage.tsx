@@ -122,30 +122,40 @@ const FeedPost = memo(({
     <div className="border-b border-border">
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <button onClick={() => onNavigate(`/profile/${post.user_id}`)} className="flex items-center gap-2.5">
-          <DefaultAvatar src={post.profile.photo_url} alt={post.profile.name} className="h-9 w-9" />
-          <div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-semibold">{post.profile.name}</span>
-              {post.profile.is_verified && <img src={verifiedBadge} className="h-3.5 w-3.5" />}
-            </div>
-            <span className="text-[10px] text-muted-foreground">
-              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-            </span>
-          </div>
-        </button>
+     
+<div className="flex items-center justify-between px-4 py-3">
 
-       <button
-  onClick={(e) => {
-    e.stopPropagation();
-    setMenuOpen(!menuOpen);
-  }}
->
-          <MoreVertical className="h-4 w-4" />
-        </button>
+  {/* LEFT SIDE (NOT FULL BUTTON ANYMORE) */}
+  <div className="flex items-center gap-2.5">
+    <button
+      onClick={() => onNavigate(`/profile/${post.user_id}`)}
+      className="flex items-center gap-2.5 shrink-0"
+    >
+      <DefaultAvatar src={post.profile.photo_url} alt={post.profile.name} className="h-9 w-9" />
+      <div>
+        <div className="flex items-center gap-1">
+          <span className="text-sm font-semibold">{post.profile.name}</span>
+          {post.profile.is_verified && <img src={verifiedBadge} className="h-3.5 w-3.5" />}
+        </div>
+        <span className="text-[10px] text-muted-foreground">
+          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+        </span>
       </div>
+    </button>
+  </div>
 
+  {/* RIGHT SIDE (FORCED ABOVE) */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      setMenuOpen(!menuOpen);
+    }}
+    className="relative z-20 p-1"
+  >
+    <MoreVertical className="h-4 w-4" />
+  </button>
+
+</div>
       {/* Media */}
       {post.media_url && (
         <div ref={containerRef} className="relative">
