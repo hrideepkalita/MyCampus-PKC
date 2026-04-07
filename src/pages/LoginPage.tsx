@@ -63,8 +63,11 @@ const LoginPage = () => {
         <div className="flex flex-col items-center mb-8">
           <img src={logo} alt="MyCampus" className="h-20 w-20 mb-3" />
           <h1 className="font-display text-2xl font-bold text-foreground">MyCampus</h1>
-          <p className="text-sm text-muted-foreground mt-1">Pub Kamrup College, Baihata Chariali</p>
+         <div className="text-sm text-muted-foreground mt-1 text-center">
+         <p>Computer Science Department</p>
+         <p>Pub Kamrup College, Baihata Chariali</p>
         </div>
+       </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
