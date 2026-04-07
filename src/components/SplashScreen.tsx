@@ -14,7 +14,7 @@ const SplashScreen = () => (
         MyCampus
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Pub Kamrup College, Baihata Chariali
+       Computer Science Department , Pub Kamrup College
       </p>
       <div className="mt-8 h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
     </motion.div>
