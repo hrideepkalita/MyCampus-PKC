@@ -136,20 +136,52 @@ const FeedPost = memo(({
           </div>
         </button>
 
-        <button onClick={() => setMenuOpen(!menuOpen)}>
+       <button
+  onClick={(e) => {
+    e.stopPropagation();
+    setMenuOpen(!menuOpen);
+  }}
+>
           <MoreVertical className="h-4 w-4" />
         </button>
       </div>
 
       {/* Media */}
       {post.media_url && (
-        <div ref={containerRef} onClick={handleTap}>
-          {isVideo ? (
-            <video ref={videoRef} src={post.media_url} className="w-full" muted={isMuted} />
-          ) : (
-            <img src={post.media_url} className="w-full" />
-          )}
-        </div>
+        <div ref={containerRef} className="relative">
+  {isVideo ? (
+    <>
+      <video
+        ref={videoRef}
+        src={post.media_url}
+        className="w-full"
+        muted={isMuted}
+        onClick={handleTap}
+      />
+
+      {/* MUTE BUTTON */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleMute();
+        }}
+        className="absolute bottom-2 right-2 z-10 bg-black/50 p-2 rounded-full"
+      >
+        {isMuted ? (
+          <VolumeX className="h-4 w-4 text-white" />
+        ) : (
+          <Volume2 className="h-4 w-4 text-white" />
+        )}
+      </button>
+    </>
+  ) : (
+    <img
+      src={post.media_url}
+      className="w-full"
+      onClick={handleTap}
+    />
+  )}
+</div>
       )}
 
       {/* Actions */}
