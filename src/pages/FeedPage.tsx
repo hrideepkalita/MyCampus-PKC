@@ -212,49 +212,49 @@ const FeedPost = memo(({
 
 </div>
       {/* Media */}
-      {post.media_url && (
-        <div
-  ref={containerRef}
-  className="relative w-full bg-black"
-  style={{ contain: "layout paint size" }}
->
-  {isVideo ? (
-    <video
-      ref={videoRef}
-      src={post.media_url}
-      className="w-full max-h-[70vh] object-contain"
-      muted={isMuted}
-      playsInline
-      preload="metadata"
-      onClick={handleTap}
-    />
-  ) : (
-    <img
-      src={post.media_url}
-      className="w-full max-h-[70vh] object-contain"
-      loading="lazy"
-      onClick={handleTap}
-    />
-  )}
+     {post.media_url && (
+  <div
+    ref={containerRef}
+    className="relative w-full bg-black overflow-hidden"
+  >
+    {isVideo ? (
+      <>
+        <video
+          ref={videoRef}
+          src={post.media_url}
+          className="w-full aspect-square object-cover"
+          muted={isMuted}
+          playsInline
+          preload="metadata"
+          onClick={handleTap}
+        />
 
-  {/* MUTE BUTTON */}
-  {isVideo && (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggleMute();
-      }}
-      className="absolute bottom-2 right-2 z-10 bg-black/50 p-2 rounded-full"
-    >
-      {isMuted ? (
-        <VolumeX className="h-4 w-4 text-white" />
-      ) : (
-        <Volume2 className="h-4 w-4 text-white" />
-      )}
-    </button>
-  )}
-</div>
-      )}
+        {/* MUTE BUTTON */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleMute();
+          }}
+          className="absolute bottom-2 right-2 z-10 bg-black/50 p-2 rounded-full"
+        >
+          {isMuted ? (
+            <VolumeX className="h-4 w-4 text-white" />
+          ) : (
+            <Volume2 className="h-4 w-4 text-white" />
+          )}
+        </button>
+      </>
+    ) : (
+      <img
+        src={post.media_url}
+        className="w-full aspect-square object-cover"
+        loading="lazy"
+        decoding="async"
+        onClick={handleTap}
+      />
+    )}
+  </div>
+)}
 
       {/* Actions */}
       <div className="px-4 py-2">
