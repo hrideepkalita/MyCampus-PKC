@@ -84,7 +84,28 @@
   * {
     @apply border-border;
     box-sizing: border-box;
+
+    /* 🔥 ADD THIS HERE */
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
+
+  /* ✅ Allow inputs */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  html {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+  button, img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 
   html {
     overflow-x: hidden;
