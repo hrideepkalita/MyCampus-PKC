@@ -51,7 +51,7 @@ const handleTouchMove = (e: React.TouchEvent) => {
 };
 
 const handleSwipeLeft = () => {
-  navigate("/confess"); // 👉 Notices → Confess
+  navigate("/confessions"); // 👉 Notices → Confess
 };
 
 const handleSwipeRight = () => {
