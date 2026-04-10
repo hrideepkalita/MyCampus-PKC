@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, MessageCircle, MoreVertical, Trash2, Edit, Share2, Plus, Volume2, VolumeX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 import { useFloatingHearts } from "@/App";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import CreatePostModal from "@/components/CreatePostModal";
@@ -309,6 +310,31 @@ FeedPost.displayName = "FeedPost";
 const FeedPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const touchStartX = useRef(0);
+const touchEndX = useRef(0);
+
+const handleTouchStart = (e: React.TouchEvent) => {
+  touchStartX.current = e.touches[0].clientX;
+};
+
+const handleTouchMove = (e: React.TouchEvent) => {
+  touchEndX.current = e.touches[0].clientX;
+};
+
+const handleSwipeLeft = () => {
+  navigate("/friends"); // 👉 Home → Friends
+};
+
+const handleSwipeRight = () => {
+  navigate("/profile"); // 👉 Home → Profile (hidden page)
+};
+
+const handleTouchEnd = () => {
+  const diff = touchStartX.current - touchEndX.current;
+
+  if (diff > 80) handleSwipeLeft();     // swipe left
+  if (diff < -80) handleSwipeRight();   // swipe right
+};
   const { enabled: heartsEnabled, toggle: toggleHearts } = useFloatingHearts();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -483,7 +509,12 @@ const FeedPage = () => {
   const handleNavigate = useCallback((path: string) => navigate(path), [navigate]);
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+     <div
+  className="min-h-[100dvh] bg-background pb-24"
+  onTouchStart={handleTouchStart}
+  onTouchMove={handleTouchMove}
+  onTouchEnd={handleTouchEnd}
+>
       <TopBar
         title="Home"
         rightContent={
