@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,8 +34,8 @@ const tagConfig: Record<string, { emoji: string; bg: string }> = {
   crush: { emoji: "💘", bg: "bg-[hsl(var(--confession-pink))]" },
   secret: { emoji: "🤫", bg: "bg-[hsl(var(--confession-yellow))]" },
   general: { emoji: "💬", bg: "bg-[hsl(var(--confession-blue))]" },
-  compliment: { emoji: "💌", bg: "bg-[hsl(var(--confession-green))]" },
-  "guess-who": { emoji: "👀", bg: "bg-[hsl(var(--confession-orange))]" },
+  compliment: { emoji: "💌", bg: "bg-[hsl(var(--confession-blue))]" },
+  "guess-who": { emoji: "👀", bg: "bg-[hsl(var(--confession-yellow))]" },
 };
 
 const timeAgo = (date: string) => {
@@ -62,32 +61,7 @@ const ConfessionsPage = () => {
   const [replies, setReplies] = useState<Record<string, Reply[]>>({});
   const [openReplies, setOpenReplies] = useState<Set<string>>(new Set());
   const [replyText, setReplyText] = useState<Record<string, string>>({});
-  const navigate = useNavigate();
-  const touchStartX = useRef(0);
-const touchEndX = useRef(0);
 
-const handleTouchStart = (e: React.TouchEvent) => {
-  touchStartX.current = e.touches[0].clientX;
-};
-
-const handleTouchMove = (e: React.TouchEvent) => {
-  touchEndX.current = e.touches[0].clientX;
-};
-
-const handleSwipeLeft = () => {
-  navigate("/lostfound"); // 👉 Confess → Lost&Found
-};
-
-const handleSwipeRight = () => {
-  navigate("/notices"); // 👉 Confess → Notices
-};
-
-const handleTouchEnd = () => {
-  const diff = touchStartX.current - touchEndX.current;
-
-  if (diff > 80) handleSwipeLeft();
-  if (diff < -80) handleSwipeRight();
-};
   useEffect(() => {
     fetchConfessions();
   }, [user]);
@@ -246,12 +220,7 @@ const handleTouchEnd = () => {
     : confessions;
 
   return (
-    <div
-  className="min-h-[100dvh] bg-background pb-24"
-  onTouchStart={handleTouchStart}
-  onTouchMove={handleTouchMove}
-  onTouchEnd={handleTouchEnd}
->
+    <div className="min-h-[100dvh] bg-background pb-24">
       <TopBar
         title="Confessions"
         rightContent={

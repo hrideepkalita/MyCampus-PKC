@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom"; 
 import BottomNav from "@/components/BottomNav";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +26,6 @@ const timeAgo = (date: string) => {
 };
 
 const NoticesPage = () => {
-  const navigate = useNavigate(); 
   const { user } = useAuth();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,31 +37,7 @@ const NoticesPage = () => {
   const [canPost, setCanPost] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const touchStartX = useRef(0);
-const touchEndX = useRef(0);
 
-const handleTouchStart = (e: React.TouchEvent) => {
-  touchStartX.current = e.touches[0].clientX;
-};
-
-const handleTouchMove = (e: React.TouchEvent) => {
-  touchEndX.current = e.touches[0].clientX;
-};
-
-const handleSwipeLeft = () => {
-  navigate("/confessions"); // 👉 Notices → Confess
-};
-
-const handleSwipeRight = () => {
-  navigate("/friends"); // 👉 Notices → Friends
-};
-
-const handleTouchEnd = () => {
-  const diff = touchStartX.current - touchEndX.current;
-
-  if (diff > 80) handleSwipeLeft();
-  if (diff < -80) handleSwipeRight();
-};
   useEffect(() => {
     fetchNotices();
     checkPermission();
@@ -134,14 +108,7 @@ const handleTouchEnd = () => {
   };
 
   return (
-    
-     <div
-  className="min-h-[100dvh] bg-background pb-24"
-  onTouchStart={handleTouchStart}
-  onTouchMove={handleTouchMove}
-  onTouchEnd={handleTouchEnd}
->
-      
+    <div className="min-h-[100dvh] bg-background pb-24">
       {/* Fullscreen notice */} 
       {selectedNotice && (
         <div className="fixed inset-0 z-50 flex flex-col bg-background overflow-auto">
