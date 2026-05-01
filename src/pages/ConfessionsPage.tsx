@@ -74,7 +74,7 @@ const ConfessionsPage = () => {
       .select("id, text, tag, created_at, user_id, is_anonymous")
       .order("created_at", { ascending: false })
       .limit(100);
-    const rows = rowsData as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }> | null;
+    const rows = rowsData as unknown as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }> | null;
 
     if (!rows) { setLoading(false); return; }
 
