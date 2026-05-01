@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, MessageCircle, MoreVertical, Trash2, Edit, Share2, Plus, Volume2, VolumeX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSwipeNav } from "@/hooks/useSwipeNav";
 import { useFloatingHearts } from "@/App";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import CreatePostModal from "@/components/CreatePostModal";
@@ -307,8 +308,10 @@ FeedPost.displayName = "FeedPost";
 
 /* ── Main Feed ── */
 const FeedPage = () => {
+
   const { user } = useAuth();
   const navigate = useNavigate();
+  useSwipeNav({ next: "/friends", prev: "/profile" });
   const { enabled: heartsEnabled, toggle: toggleHearts } = useFloatingHearts();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);

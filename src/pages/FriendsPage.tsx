@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, UserPlus, X, Check, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
+import { useSwipeNav } from "@/hooks/useSwipeNav";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
@@ -29,32 +29,7 @@ interface FriendRequest {
 const FriendsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const touchStartX = useRef(0);
-const touchEndX = useRef(0);
-
-const handleTouchStart = (e: React.TouchEvent) => {
-  touchStartX.current = e.touches[0].clientX;
-};
-
-const handleTouchMove = (e: React.TouchEvent) => {
-  touchEndX.current = e.touches[0].clientX;
-};
-
-// 👉 YOUR TAB ORDER: Home → Friends → Notices
-const handleSwipeLeft = () => {
-  navigate("/notices"); // next tab
-};
-
-const handleSwipeRight = () => {
-  navigate("/"); // previous tab (home)
-};
-
-const handleTouchEnd = () => {
-  const diff = touchStartX.current - touchEndX.current;
-
-  if (diff > 80) handleSwipeLeft();
-  if (diff < -80) handleSwipeRight();
-};
+  useSwipeNav({ next: "/notices", prev: "/feed" });
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [myProfile, setMyProfile] = useState<UserProfile | null>(null);
@@ -217,12 +192,7 @@ const handleTouchEnd = () => {
   const totalFriends = friends.length;
 
   return (
-   <div
-  className="min-h-[100dvh] bg-background pb-24"
-  onTouchStart={handleTouchStart}
-  onTouchMove={handleTouchMove}
-  onTouchEnd={handleTouchEnd}
-     >
+    <div className="min-h-[100dvh] bg-background pb-24">
       <TopBar title="Friends" />
 
       <div className="mx-auto max-w-md px-4 pt-3">
