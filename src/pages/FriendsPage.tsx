@@ -185,12 +185,12 @@ const handleTouchEnd = () => {
       return;
     }
     const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-    await supabase.from("notifications").insert({
-      user_id: targetUser.id,
-      type: "friend_request",
-      title: `${myP?.name || "Someone"} sent you a friend request!`,
-      message: `${myP?.name || "Someone"} wants to be your friend 👋`,
-      related_id: user.id,
+    await supabase.rpc("create_notification", {
+      _target_user_id: targetUser.id,
+      _type: "friend_request",
+      _title: `${myP?.name || "Someone"} sent you a friend request!`,
+      _message: `${myP?.name || "Someone"} wants to be your friend 👋`,
+      _related_id: user.id,
     });
     toast.success("Friend request sent!");
   };
