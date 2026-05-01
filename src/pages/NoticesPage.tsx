@@ -92,7 +92,10 @@ const NoticesPage = () => {
   };
 
   const handlePost = async () => {
-    if (!user || !title.trim() || !description.trim()) return;
+    if (!user || !canPost || !title.trim() || !description.trim()) {
+      if (!canPost) toast.error("Only verified union members can post notices");
+      return;
+    }
     await supabase.from("notices").insert({
       user_id: user.id,
       title: title.trim(),
@@ -134,7 +137,7 @@ const NoticesPage = () => {
       <TopBar
         title="Notices"
         rightContent={
-          user ? (
+          user && canPost ? (
             <button
               onClick={() => setShowCompose(prev => !prev)}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
