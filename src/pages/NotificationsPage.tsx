@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Bell, Heart, Users, Shield, Search as SearchIcon, MessageCircle, Check, UserPlus, Eye, Image } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Heart, Users, Shield, Search as SearchIcon, MessageCircle, Check, UserPlus, Eye, Image } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface Notification {
   id: string;
@@ -41,6 +42,7 @@ const timeAgo = (date: string) => {
 };
 
 const NotificationsPage = () => {
+  const push = usePushNotifications();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -114,6 +116,35 @@ const NotificationsPage = () => {
       </div>
 
       <div className="mx-auto max-w-md px-4 pt-4 space-y-2">
+        {push.supported && push.permission !== "denied" && !push.subscribed && (
+          <div className="flex items-center gap-3 rounded-2xl bg-primary/10 border border-primary/20 p-3 mb-2">
+            <Bell className="h-5 w-5 text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Get push notifications</p>
+              <p className="text-xs text-muted-foreground">Friend requests, likes, notices & more</p>
+            </div>
+            <button
+              onClick={push.subscribe}
+              disabled={push.busy}
+              className="rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground disabled:opacity-50"
+            >
+              {push.busy ? "..." : "Enable"}
+            </button>
+          </div>
+        )}
+        {push.supported && push.subscribed && (
+          <div className="flex items-center gap-2 rounded-xl bg-muted/50 px-3 py-2 mb-2">
+            <Bell className="h-4 w-4 text-primary" />
+            <p className="flex-1 text-xs text-muted-foreground">Push notifications enabled</p>
+            <button
+              onClick={push.unsubscribe}
+              disabled={push.busy}
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              <BellOff className="h-3.5 w-3.5 inline" /> Disable
+            </button>
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
