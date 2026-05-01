@@ -146,7 +146,7 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
           <div className="rounded-xl bg-muted px-3 py-2">
             <p className="text-xs font-semibold text-foreground">{comment.profile.name}</p>
             <p className="text-xs text-foreground mt-0.5 break-words">
-            {comment.content || comment.text} </p>
+            {comment.content} </p>
           </div>
           <div className="flex items-center gap-3 mt-1 px-1">
             <span className="text-[10px] text-muted-foreground">
