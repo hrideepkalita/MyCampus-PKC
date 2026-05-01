@@ -204,12 +204,12 @@ const handleTouchEnd = () => {
       setFollowingSet(prev => new Set(prev).add(targetUser.id));
       await supabase.from("follows").insert({ follower_id: user.id, following_id: targetUser.id });
       const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-      await supabase.from("notifications").insert({
-        user_id: targetUser.id,
-        type: "follow",
-        title: `${myP?.name || "Someone"} followed you!`,
-        message: `${myP?.name || "Someone"} started following you 👋`,
-        related_id: user.id,
+      await supabase.rpc("create_notification", {
+        _target_user_id: targetUser.id,
+        _type: "follow",
+        _title: `${myP?.name || "Someone"} followed you!`,
+        _message: `${myP?.name || "Someone"} started following you 👋`,
+        _related_id: user.id,
       });
     }
   };
