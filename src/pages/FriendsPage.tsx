@@ -155,12 +155,12 @@ const handleTouchEnd = () => {
 
     await supabase.from("friend_requests").update({ status: "accepted" }).eq("id", req.id);
     const myName = myProfile?.name || "Someone";
-    await supabase.from("notifications").insert({
-      user_id: req.from_user_id,
-      type: "friend_accepted",
-      title: `${myName} accepted your friend request!`,
-      message: `${myName} is now your friend 🎉`,
-      related_id: user!.id,
+    await supabase.rpc("create_notification", {
+      _target_user_id: req.from_user_id,
+      _type: "friend_accepted",
+      _title: `${myName} accepted your friend request!`,
+      _message: `${myName} is now your friend 🎉`,
+      _related_id: user!.id,
     });
     toast.success(`You're now friends with ${req.profile.name}!`);
   };
