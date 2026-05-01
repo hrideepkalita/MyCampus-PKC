@@ -42,12 +42,12 @@ const PhotoGallery = ({ photos, onPhotoLiked, ownerName }: PhotoGalleryProps) =>
           .eq("id", user.id)
           .single();
         const myName = myProfile?.name || "Someone";
-        await supabase.from("notifications").insert({
-          user_id: photo.user_id,
-          type: "photo_like",
-          title: `${myName} liked your photo`,
-          message: `${myName} liked your photo 📸`,
-          related_id: user.id,
+        await supabase.rpc("create_notification", {
+          _target_user_id: photo.user_id,
+          _type: "photo_like",
+          _title: `${myName} liked your photo`,
+          _message: `${myName} liked your photo 📸`,
+          _related_id: user.id,
         });
       }
       onPhotoLiked();
