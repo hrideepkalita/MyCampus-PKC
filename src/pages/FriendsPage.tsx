@@ -192,12 +192,7 @@ const FriendsPage = () => {
   const totalFriends = friends.length;
 
   return (
-   <div
-  className="min-h-[100dvh] bg-background pb-24"
-  onTouchStart={handleTouchStart}
-  onTouchMove={handleTouchMove}
-  onTouchEnd={handleTouchEnd}
-     >
+    <div className="min-h-[100dvh] bg-background pb-24">
       <TopBar title="Friends" />
 
       <div className="mx-auto max-w-md px-4 pt-3">
