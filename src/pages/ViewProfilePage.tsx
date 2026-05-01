@@ -177,7 +177,7 @@ const ViewProfilePage = () => {
     const { error } = await supabase.from("friend_requests").insert({ from_user_id: user.id, to_user_id: profile.id });
     if (error) { setFriendRequestStatus(null); toast.error("Already sent"); return; }
     const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-    await supabase.from("notifications").insert({ user_id: profile.id, type: "friend_request", title: `${myProfile?.name || "Someone"} sent you a friend request!`, message: `${myProfile?.name || "Someone"} wants to be your friend 👋`, related_id: user.id });
+    await supabase.rpc("create_notification", { _target_user_id: profile.id, _type: "friend_request", _title: `${myProfile?.name || "Someone"} sent you a friend request!`, _message: `${myProfile?.name || "Someone"} wants to be your friend 👋`, _related_id: user.id });
     toast.success("Friend request sent!");
   };
 
