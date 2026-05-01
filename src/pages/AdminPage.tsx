@@ -104,11 +104,11 @@ const AdminPage = () => {
       }
 
       // Send notification
-      await supabase.from("notifications").insert({
-        user_id: req.user_id,
-        type: "verification",
-        title: action === "approved" ? "Verification Approved ✅" : "Verification Rejected ❌",
-        message: action === "approved"
+      await supabase.rpc("create_notification", {
+        _target_user_id: req.user_id,
+        _type: "verification",
+        _title: action === "approved" ? "Verification Approved ✅" : "Verification Rejected ❌",
+        _message: action === "approved"
           ? "Your college ID has been verified! You now have a verified badge."
           : "Your verification was rejected. Please upload a clearer photo of your college ID.",
       });

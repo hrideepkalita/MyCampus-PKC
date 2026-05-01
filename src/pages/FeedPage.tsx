@@ -423,11 +423,11 @@ const FeedPage = () => {
     await supabase.from("post_likes").insert({ user_id: user!.id, post_id: post.id });
     if (post.user_id !== user!.id) {
       const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user!.id).single();
-      await supabase.from("notifications").insert({
-        user_id: post.user_id, type: "post_like",
-        title: `${myProfile?.name || "Someone"} liked your post!`,
-        message: `${myProfile?.name || "Someone"} liked your post ❤️`,
-        related_id: post.id,
+      await supabase.rpc("create_notification", {
+        _target_user_id: post.user_id, _type: "post_like",
+        _title: `${myProfile?.name || "Someone"} liked your post!`,
+        _message: `${myProfile?.name || "Someone"} liked your post ❤️`,
+        _related_id: post.id,
       });
     }
   }, [user]);
@@ -441,11 +441,11 @@ const FeedPage = () => {
       await supabase.from("post_likes").insert({ user_id: user.id, post_id: post.id });
       if (post.user_id !== user.id) {
         const { data: myProfile } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-        await supabase.from("notifications").insert({
-          user_id: post.user_id, type: "post_like",
-          title: `${myProfile?.name || "Someone"} liked your post!`,
-          message: `${myProfile?.name || "Someone"} liked your post ❤️`,
-          related_id: post.id,
+        await supabase.rpc("create_notification", {
+          _target_user_id: post.user_id, _type: "post_like",
+          _title: `${myProfile?.name || "Someone"} liked your post!`,
+          _message: `${myProfile?.name || "Someone"} liked your post ❤️`,
+          _related_id: post.id,
         });
       }
     }

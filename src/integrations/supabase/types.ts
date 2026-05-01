@@ -16,27 +16,30 @@ export type Database = {
     Tables: {
       comments: {
         Row: {
+          content: string | null
           created_at: string
           id: string
           parent_id: string | null
           post_id: string
-          text: string
+          text: string | null
           user_id: string
         }
         Insert: {
+          content?: string | null
           created_at?: string
           id?: string
           parent_id?: string | null
           post_id: string
-          text: string
+          text?: string | null
           user_id: string
         }
         Update: {
+          content?: string | null
           created_at?: string
           id?: string
           parent_id?: string | null
           post_id?: string
-          text?: string
+          text?: string | null
           user_id?: string
         }
         Relationships: [
@@ -83,6 +86,13 @@ export type Database = {
             referencedRelation: "confessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "confession_likes_confession_id_fkey"
+            columns: ["confession_id"]
+            isOneToOne: false
+            referencedRelation: "confessions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       confession_replies: {
@@ -115,6 +125,13 @@ export type Database = {
             referencedRelation: "confessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "confession_replies_confession_id_fkey"
+            columns: ["confession_id"]
+            isOneToOne: false
+            referencedRelation: "confessions_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       confession_reports: {
@@ -145,6 +162,13 @@ export type Database = {
             columns: ["confession_id"]
             isOneToOne: false
             referencedRelation: "confessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "confession_reports_confession_id_fkey"
+            columns: ["confession_id"]
+            isOneToOne: false
+            referencedRelation: "confessions_public"
             referencedColumns: ["id"]
           },
         ]
@@ -587,6 +611,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       verification_requests: {
         Row: {
           created_at: string
@@ -613,13 +658,55 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      confessions_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_anonymous: boolean | null
+          tag: string | null
+          text: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          tag?: string | null
+          text?: string | null
+          user_id?: never
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          tag?: string | null
+          text?: string | null
+          user_id?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      create_notification: {
+        Args: {
+          _message: string
+          _related_id?: string
+          _target_user_id: string
+          _title: string
+          _type: string
+        }
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -746,6 +833,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

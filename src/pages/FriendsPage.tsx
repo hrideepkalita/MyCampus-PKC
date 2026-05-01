@@ -155,12 +155,12 @@ const handleTouchEnd = () => {
 
     await supabase.from("friend_requests").update({ status: "accepted" }).eq("id", req.id);
     const myName = myProfile?.name || "Someone";
-    await supabase.from("notifications").insert({
-      user_id: req.from_user_id,
-      type: "friend_accepted",
-      title: `${myName} accepted your friend request!`,
-      message: `${myName} is now your friend 🎉`,
-      related_id: user!.id,
+    await supabase.rpc("create_notification", {
+      _target_user_id: req.from_user_id,
+      _type: "friend_accepted",
+      _title: `${myName} accepted your friend request!`,
+      _message: `${myName} is now your friend 🎉`,
+      _related_id: user!.id,
     });
     toast.success(`You're now friends with ${req.profile.name}!`);
   };
@@ -185,12 +185,12 @@ const handleTouchEnd = () => {
       return;
     }
     const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-    await supabase.from("notifications").insert({
-      user_id: targetUser.id,
-      type: "friend_request",
-      title: `${myP?.name || "Someone"} sent you a friend request!`,
-      message: `${myP?.name || "Someone"} wants to be your friend 👋`,
-      related_id: user.id,
+    await supabase.rpc("create_notification", {
+      _target_user_id: targetUser.id,
+      _type: "friend_request",
+      _title: `${myP?.name || "Someone"} sent you a friend request!`,
+      _message: `${myP?.name || "Someone"} wants to be your friend 👋`,
+      _related_id: user.id,
     });
     toast.success("Friend request sent!");
   };
@@ -204,12 +204,12 @@ const handleTouchEnd = () => {
       setFollowingSet(prev => new Set(prev).add(targetUser.id));
       await supabase.from("follows").insert({ follower_id: user.id, following_id: targetUser.id });
       const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-      await supabase.from("notifications").insert({
-        user_id: targetUser.id,
-        type: "follow",
-        title: `${myP?.name || "Someone"} followed you!`,
-        message: `${myP?.name || "Someone"} started following you 👋`,
-        related_id: user.id,
+      await supabase.rpc("create_notification", {
+        _target_user_id: targetUser.id,
+        _type: "follow",
+        _title: `${myP?.name || "Someone"} followed you!`,
+        _message: `${myP?.name || "Someone"} started following you 👋`,
+        _related_id: user.id,
       });
     }
   };

@@ -108,12 +108,12 @@ const DiscoverPage = () => {
         .single();
       const myName = myProfile?.name || "Someone";
       // Send notification with related_id for click-to-redirect
-      await supabase.from("notifications").insert({
-        user_id: profile.id,
-        type: "like",
-        title: `${myName} liked your profile!`,
-        message: `${myName} liked your profile 💕`,
-        related_id: user.id,
+      await supabase.rpc("create_notification", {
+        _target_user_id: profile.id,
+        _type: "like",
+        _title: `${myName} liked your profile!`,
+        _message: `${myName} liked your profile 💕`,
+        _related_id: user.id,
       });
 
       const { data: match } = await supabase
