@@ -92,7 +92,10 @@ const NoticesPage = () => {
   };
 
   const handlePost = async () => {
-    if (!user || !title.trim() || !description.trim()) return;
+    if (!user || !canPost || !title.trim() || !description.trim()) {
+      if (!canPost) toast.error("Only verified union members can post notices");
+      return;
+    }
     await supabase.from("notices").insert({
       user_id: user.id,
       title: title.trim(),
