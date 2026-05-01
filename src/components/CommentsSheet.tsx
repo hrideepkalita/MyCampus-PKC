@@ -94,12 +94,12 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
     // Notify post owner
     if (postOwnerId !== user.id) {
       const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-      await supabase.from("notifications").insert({
-        user_id: postOwnerId,
-        type: "comment",
-        title: `${myP?.name || "Someone"} commented on your post`,
-        message: text.trim().slice(0, 100),
-        related_id: postId,
+      await supabase.rpc("create_notification", {
+        _target_user_id: postOwnerId,
+        _type: "comment",
+        _title: `${myP?.name || "Someone"} commented on your post`,
+        _message: text.trim().slice(0, 100),
+        _related_id: postId,
       });
     }
 
@@ -108,12 +108,12 @@ const CommentsSheet = ({ postId, postOwnerId, onClose }: CommentsSheetProps) => 
       const parentComment = findCommentById(comments, replyTo.id);
       if (parentComment && parentComment.user_id !== user.id) {
         const { data: myP } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-        await supabase.from("notifications").insert({
-          user_id: parentComment.user_id,
-          type: "comment_reply",
-          title: `${myP?.name || "Someone"} replied to your comment`,
-          message: text.trim().slice(0, 100),
-          related_id: postId,
+        await supabase.rpc("create_notification", {
+          _target_user_id: parentComment.user_id,
+          _type: "comment_reply",
+          _title: `${myP?.name || "Someone"} replied to your comment`,
+          _message: text.trim().slice(0, 100),
+          _related_id: postId,
         });
       }
     }
