@@ -308,8 +308,6 @@ FeedPost.displayName = "FeedPost";
 
 /* ── Main Feed ── */
 const FeedPage = () => {
-  // Swipe nav: leftmost tab; right→Profile, left→Friends
-  // Note: hook below is invoked after navigate is created
 
   const { user } = useAuth();
   const navigate = useNavigate();
