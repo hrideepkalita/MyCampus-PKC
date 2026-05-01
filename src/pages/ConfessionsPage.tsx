@@ -70,7 +70,7 @@ const ConfessionsPage = () => {
     if (!user) return;
 
     const { data: rows } = await supabase
-      .from("confessions")
+      .from("confessions_public" as any)
       .select("id, text, tag, created_at, user_id, is_anonymous")
       .order("created_at", { ascending: false })
       .limit(100);
