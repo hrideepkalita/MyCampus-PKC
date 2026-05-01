@@ -16,27 +16,30 @@ export type Database = {
     Tables: {
       comments: {
         Row: {
+          content: string | null
           created_at: string
           id: string
           parent_id: string | null
           post_id: string
-          text: string
+          text: string | null
           user_id: string
         }
         Insert: {
+          content?: string | null
           created_at?: string
           id?: string
           parent_id?: string | null
           post_id: string
-          text: string
+          text?: string | null
           user_id: string
         }
         Update: {
+          content?: string | null
           created_at?: string
           id?: string
           parent_id?: string | null
           post_id?: string
-          text?: string
+          text?: string | null
           user_id?: string
         }
         Relationships: [
