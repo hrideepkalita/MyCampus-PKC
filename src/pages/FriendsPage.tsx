@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, UserPlus, X, Check, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
+import { useSwipeNav } from "@/hooks/useSwipeNav";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
