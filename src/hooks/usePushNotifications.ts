@@ -77,6 +77,7 @@ export function usePushNotifications() {
     setBusy(true);
     try {
       const perm = await Notification.requestPermission();
+      console.log("[Push] Permission result:", perm);
       setPermission(perm as PushPermissionState);
       if (perm !== "granted") return false;
 
