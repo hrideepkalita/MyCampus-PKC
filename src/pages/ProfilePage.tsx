@@ -33,6 +33,7 @@ interface Profile {
   phone: string | null;
   semester: string | null;
 }
+}
 
 interface GalleryPhoto {
   id: string;
