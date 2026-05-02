@@ -295,7 +295,7 @@ const LostFoundPage = () => {
       </div>
 
       <BottomNav />
-    </div>
+    </SwipeWrapper>
   );
 };
 
