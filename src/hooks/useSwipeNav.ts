@@ -1,98 +1,102 @@
-import { useEffect, useRef } from "react";
+import { useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { PanInfo } from "framer-motion";
 
 interface Options {
   /** Path to navigate to on left swipe (next tab). */
   next?: string;
   /** Path to navigate to on right swipe (previous tab / special). */
   prev?: string;
-  /** Minimum horizontal distance in px to trigger. Default 60. */
+  /** Minimum horizontal distance in px to trigger. Default 50. */
   threshold?: number;
-  /** Horizontal must exceed vertical by this ratio. Default 1.5. */
-  ratio?: number;
+  /** Minimum velocity to trigger on fast swipes. Default 300. */
+  velocityThreshold?: number;
   /** Disable when true (e.g. modals open). */
   disabled?: boolean;
 }
 
 /**
- * Page-level swipe navigation that respects taps and vertical scrolling.
- * Attached at window level, but ignores gestures that start on
- * interactive elements or inside horizontally scrollable containers.
+ * Framer Motion–based swipe navigation hook.
+ *
+ * Returns `onPanEnd` handler to attach to a `<motion.div>` wrapping
+ * the page content. Works over videos, images and all media.
+ *
+ * Uses both distance threshold AND velocity detection so fast flicks
+ * and slow deliberate swipes both register.
+ *
+ * Vertical scrolling is preserved via CSS `touch-action: pan-y`.
  */
-export function useSwipeNav({ next, prev, threshold = 60, ratio = 1.5, disabled }: Options) {
+export function useSwipeNav({
+  next,
+  prev,
+  threshold = 50,
+  velocityThreshold = 300,
+  disabled,
+}: Options) {
   const navigate = useNavigate();
-  const start = useRef<{ x: number; y: number; t: number; ignore: boolean } | null>(null);
+  const startTarget = useRef<EventTarget | null>(null);
 
-  useEffect(() => {
-    if (disabled) return;
-
-    const isInteractive = (el: EventTarget | null): boolean => {
-      let n = el as HTMLElement | null;
-      while (n && n !== document.body) {
-        const tag = n.tagName;
-        if (
-          tag === "BUTTON" ||
-          tag === "A" ||
-          tag === "INPUT" ||
-          tag === "TEXTAREA" ||
-          tag === "SELECT" ||
-          tag === "VIDEO" ||
-          n.getAttribute?.("role") === "button" ||
-          n.dataset?.noSwipe === "true"
-        ) {
-          return true;
-        }
-        // Inside a horizontally scrollable container? Let it scroll.
+  /** Check if the pan started on an interactive element we should skip */
+  const isInteractive = (el: EventTarget | null): boolean => {
+    let n = el as HTMLElement | null;
+    while (n && n !== document.body) {
+      const tag = n.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        n.dataset?.noSwipe === "true"
+      ) {
+        return true;
+      }
+      // Inside a horizontally scrollable container → let it scroll
+      if (
+        (n.scrollWidth > n.clientWidth + 4) &&
+        n.clientWidth > 0
+      ) {
         const style = window.getComputedStyle(n);
-        if (
-          (style.overflowX === "auto" || style.overflowX === "scroll") &&
-          n.scrollWidth > n.clientWidth + 4
-        ) {
+        if (style.overflowX === "auto" || style.overflowX === "scroll") {
           return true;
         }
-        n = n.parentElement;
       }
-      return false;
-    };
+      n = n.parentElement;
+    }
+    return false;
+  };
 
-    const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) {
-        start.current = null;
-        return;
+  const onPanStart = useCallback(
+    (event: PointerEvent | MouseEvent | TouchEvent) => {
+      startTarget.current = event.target;
+    },
+    [],
+  );
+
+  const onPanEnd = useCallback(
+    (_event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => {
+      if (disabled) return;
+      if (isInteractive(startTarget.current)) return;
+
+      const { offset, velocity } = info;
+      const absX = Math.abs(offset.x);
+      const absY = Math.abs(offset.y);
+
+      // Must be primarily horizontal
+      if (absY > absX * 1.2) return;
+
+      // Accept swipe if distance OR velocity is met
+      const distanceMet = absX > threshold;
+      const velocityMet = Math.abs(velocity.x) > velocityThreshold;
+
+      if (!distanceMet && !velocityMet) return;
+
+      if (offset.x < 0 && next) {
+        navigate(next);
+      } else if (offset.x > 0 && prev) {
+        navigate(prev);
       }
-      const t = e.touches[0];
-      start.current = {
-        x: t.clientX,
-        y: t.clientY,
-        t: Date.now(),
-        ignore: isInteractive(e.target),
-      };
-    };
+    },
+    [navigate, next, prev, threshold, velocityThreshold, disabled],
+  );
 
-    const onEnd = (e: TouchEvent) => {
-      const s = start.current;
-      start.current = null;
-      if (!s || s.ignore) return;
-      const t = e.changedTouches[0];
-      if (!t) return;
-      const dx = t.clientX - s.x;
-      const dy = t.clientY - s.y;
-      const adx = Math.abs(dx);
-      const ady = Math.abs(dy);
-      const dt = Date.now() - s.t;
-      // Must be intentional horizontal swipe, not a slow drag or vertical scroll
-      if (adx < threshold) return;
-      if (adx < ady * ratio) return;
-      if (dt > 600) return;
-      if (dx < 0 && next) navigate(next);
-      else if (dx > 0 && prev) navigate(prev);
-    };
-
-    window.addEventListener("touchstart", onStart, { passive: true });
-    window.addEventListener("touchend", onEnd, { passive: true });
-    return () => {
-      window.removeEventListener("touchstart", onStart);
-      window.removeEventListener("touchend", onEnd);
-    };
-  }, [navigate, next, prev, threshold, ratio, disabled]);
+  return { onPanStart, onPanEnd };
 }
