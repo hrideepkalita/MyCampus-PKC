@@ -60,11 +60,25 @@ const AdminPage = () => {
         .select("id, name, photo_url")
         .in("id", userIds);
       const profileMap = new Map(profiles?.map((p) => [p.id, p]) || []);
-      setRequests(data.map((r) => ({
-        ...r,
-        profile_name: profileMap.get(r.user_id)?.name || "Unknown",
-        profile_photo: profileMap.get(r.user_id)?.photo_url || undefined,
-      })));
+
+      // Generate signed URLs for verification ID images (stored as paths in private bucket)
+      const enriched = await Promise.all(data.map(async (r) => {
+        let imageUrl = r.id_card_image_url;
+        // If it's a storage path (not a full URL), generate a signed URL
+        if (imageUrl && !imageUrl.startsWith("http")) {
+          const { data: signedData } = await supabase.storage
+            .from("verification-ids")
+            .createSignedUrl(imageUrl, 300); // 5 min TTL
+          imageUrl = signedData?.signedUrl || imageUrl;
+        }
+        return {
+          ...r,
+          id_card_image_url: imageUrl,
+          profile_name: profileMap.get(r.user_id)?.name || "Unknown",
+          profile_photo: profileMap.get(r.user_id)?.photo_url || undefined,
+        };
+      }));
+      setRequests(enriched);
     } else {
       setRequests([]);
     }
