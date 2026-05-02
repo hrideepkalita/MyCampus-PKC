@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Image, X } from "lucide-react";
 import { toast } from "sonner";
-import { useSwipeNav } from "@/hooks/useSwipeNav";
+import SwipeWrapper from "@/components/SwipeWrapper";
 
 interface Notice {
   id: string;
@@ -28,7 +28,7 @@ const timeAgo = (date: string) => {
 
 const NoticesPage = () => {
   const { user } = useAuth();
-  useSwipeNav({ next: "/confessions", prev: "/friends" });
+  
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompose, setShowCompose] = useState(false);

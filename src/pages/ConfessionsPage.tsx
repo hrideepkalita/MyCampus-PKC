@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Flame, Plus, Heart, Flag, Trash2, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
-import { useSwipeNav } from "@/hooks/useSwipeNav";
+import SwipeWrapper from "@/components/SwipeWrapper";
 
 const ADMIN_EMAIL = "rangiavlog@gmail.com";
 
@@ -52,7 +52,7 @@ type Tab = "latest" | "trending";
 
 const ConfessionsPage = () => {
   const { user } = useAuth();
-  useSwipeNav({ next: "/lost-found", prev: "/notices" });
+  
   const isAdmin = user?.email === ADMIN_EMAIL;
   const [tab, setTab] = useState<Tab>("latest");
   const [showCompose, setShowCompose] = useState(false);
