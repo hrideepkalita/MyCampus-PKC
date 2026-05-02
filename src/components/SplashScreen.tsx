@@ -18,6 +18,9 @@ const SplashScreen = () => (
       </p>
       <div className="mt-8 h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
     </motion.div>
+    <p className="absolute bottom-6 text-xs text-muted-foreground/70">
+      Crafted with ❤️ by LuitX
+    </p>
   </div>
 );
 

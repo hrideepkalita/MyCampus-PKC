@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronRight, UserPlus, X, Check, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useSwipeNav } from "@/hooks/useSwipeNav";
+import SwipeWrapper from "@/components/SwipeWrapper";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ interface FriendRequest {
 const FriendsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  useSwipeNav({ next: "/notices", prev: "/feed" });
+  
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [myProfile, setMyProfile] = useState<UserProfile | null>(null);
@@ -192,7 +192,7 @@ const FriendsPage = () => {
   const totalFriends = friends.length;
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+    <SwipeWrapper next="/notices" prev="/feed" className="min-h-[100dvh] bg-background pb-24">
       <TopBar title="Friends" />
 
       <div className="mx-auto max-w-md px-4 pt-3">
@@ -337,7 +337,7 @@ const FriendsPage = () => {
       </div>
 
       <BottomNav />
-    </div>
+    </SwipeWrapper>
   );
 };
 

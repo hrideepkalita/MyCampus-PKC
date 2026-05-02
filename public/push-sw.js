@@ -12,12 +12,14 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("push", (event) => {
+  console.log("[push-sw] Push event received");
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
   } catch (_) {
     data = { title: "MyCampus", body: event.data ? event.data.text() : "" };
   }
+  console.log("[push-sw] Push data:", data);
 
   const title = data.title || "MyCampus";
   const options = {

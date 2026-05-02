@@ -151,6 +151,9 @@ const LoginPage = () => {
           </button>
         </p>
       </div>
+      <p className="absolute bottom-6 text-xs text-muted-foreground/70">
+        Crafted with ❤️ by LuitX
+      </p>
     </div>
   );
 };

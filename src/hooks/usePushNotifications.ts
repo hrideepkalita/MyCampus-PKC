@@ -61,9 +61,15 @@ export function usePushNotifications() {
     setPermission(Notification.permission as PushPermissionState);
     navigator.serviceWorker
       .register("/push-sw.js")
-      .then((reg) => reg.pushManager.getSubscription())
-      .then((sub) => setSubscribed(!!sub))
-      .catch(() => {});
+      .then((reg) => {
+        console.log("[Push] Service worker registered:", reg.scope);
+        return reg.pushManager.getSubscription();
+      })
+      .then((sub) => {
+        console.log("[Push] Existing subscription:", !!sub);
+        setSubscribed(!!sub);
+      })
+      .catch((err) => console.error("[Push] SW registration failed:", err));
   }, [supported]);
 
   const subscribe = useCallback(async () => {
@@ -71,6 +77,7 @@ export function usePushNotifications() {
     setBusy(true);
     try {
       const perm = await Notification.requestPermission();
+      console.log("[Push] Permission result:", perm);
       setPermission(perm as PushPermissionState);
       if (perm !== "granted") return false;
 
@@ -99,6 +106,7 @@ export function usePushNotifications() {
         { onConflict: "endpoint" },
       );
 
+      console.log("[Push] Subscription saved successfully");
       setSubscribed(true);
       return true;
     } catch (e) {

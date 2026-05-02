@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, MapPin, Camera, Check, X, Search } from "lucide-react";
 import { toast } from "sonner";
-import { useSwipeNav } from "@/hooks/useSwipeNav";
+import SwipeWrapper from "@/components/SwipeWrapper";
 
 interface LostFoundItem {
   id: string;
@@ -30,7 +30,7 @@ const timeAgo = (date: string) => {
 
 const LostFoundPage = () => {
   const { user } = useAuth();
-  useSwipeNav({ prev: "/confessions" });
+  
   const [items, setItems] = useState<LostFoundItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -114,7 +114,7 @@ const LostFoundPage = () => {
   const filtered = tab === "all" ? items : items.filter((i) => i.type === tab);
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+    <SwipeWrapper prev="/confessions" className="min-h-[100dvh] bg-background pb-24">
       {/* Fullscreen image modal */}
       {previewImage && (
         <div
@@ -295,7 +295,7 @@ const LostFoundPage = () => {
       </div>
 
       <BottomNav />
-    </div>
+    </SwipeWrapper>
   );
 };
 
