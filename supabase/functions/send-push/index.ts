@@ -33,6 +33,15 @@ Deno.serve(async (req) => {
   if (req.method !== "POST")
     return new Response("Method not allowed", { status: 405, headers: corsHeaders });
 
+  // Only allow calls from the DB trigger (service-role key) or internal services
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (authHeader !== `Bearer ${SERVICE_ROLE}`) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   let body: Payload;
   try {
     body = await req.json();

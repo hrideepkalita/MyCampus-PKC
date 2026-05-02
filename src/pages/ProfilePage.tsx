@@ -194,10 +194,10 @@ const ProfilePage = () => {
     const file = await compressImage(rawFile);
     const ext = file.name.split(".").pop();
     const path = `${user.id}/verification_id_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("verification-ids").upload(path, file, { upsert: true });
     if (error) { toast.error("Upload failed"); setVerifying(false); return; }
-    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    await supabase.from("verification_requests").insert({ user_id: user.id, id_card_image_url: urlData.publicUrl, status: "pending" });
+    // Store the storage path, not a public URL — admins will use signed URLs to view
+    await supabase.from("verification_requests").insert({ user_id: user.id, id_card_image_url: path, status: "pending" });
     setVerificationStatus("pending");
     await supabase.from("notifications").insert({ user_id: user.id, type: "verification", title: "Verification Submitted", message: "Your college ID has been submitted for verification." });
     toast.success("ID submitted for verification!");
