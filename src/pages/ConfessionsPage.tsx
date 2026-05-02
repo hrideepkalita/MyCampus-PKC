@@ -223,7 +223,7 @@ const ConfessionsPage = () => {
     : confessions;
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+    <SwipeWrapper next="/lost-found" prev="/notices" className="min-h-[100dvh] bg-background pb-24">
       <TopBar
         title="Confessions"
         rightContent={
@@ -397,7 +397,7 @@ const ConfessionsPage = () => {
       </div>
 
       <BottomNav />
-    </div>
+    </SwipeWrapper>
   );
 };
 

@@ -113,7 +113,7 @@ const NoticesPage = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+    <SwipeWrapper next="/confessions" prev="/friends" className="min-h-[100dvh] bg-background pb-24">
       {/* Fullscreen notice */} 
       {selectedNotice && (
         <div className="fixed inset-0 z-50 flex flex-col bg-background overflow-auto">
@@ -227,7 +227,7 @@ const NoticesPage = () => {
       </div>
 
       <BottomNav />
-    </div>
+    </SwipeWrapper>
   );
 };
 

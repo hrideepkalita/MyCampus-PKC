@@ -114,7 +114,7 @@ const LostFoundPage = () => {
   const filtered = tab === "all" ? items : items.filter((i) => i.type === tab);
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+    <SwipeWrapper prev="/confessions" className="min-h-[100dvh] bg-background pb-24">
       {/* Fullscreen image modal */}
       {previewImage && (
         <div
