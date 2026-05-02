@@ -106,6 +106,7 @@ export function usePushNotifications() {
         { onConflict: "endpoint" },
       );
 
+      console.log("[Push] Subscription saved successfully");
       setSubscribed(true);
       return true;
     } catch (e) {
