@@ -524,6 +524,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_contacts: {
+        Row: {
+          created_at: string
+          id: string
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_photos: {
         Row: {
           caption: string | null
@@ -582,7 +603,6 @@ export type Database = {
           is_verified: boolean
           looking_for: string | null
           name: string
-          phone: string | null
           photo_url: string | null
           photos: string[] | null
           role: string | null
@@ -602,7 +622,6 @@ export type Database = {
           is_verified?: boolean
           looking_for?: string | null
           name: string
-          phone?: string | null
           photo_url?: string | null
           photos?: string[] | null
           role?: string | null
@@ -622,7 +641,6 @@ export type Database = {
           is_verified?: boolean
           looking_for?: string | null
           name?: string
-          phone?: string | null
           photo_url?: string | null
           photos?: string[] | null
           role?: string | null

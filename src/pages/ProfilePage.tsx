@@ -93,12 +93,14 @@ const ProfilePage = () => {
     if (!user) return;
     const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
     if (data) {
+      // Fetch phone from profile_contacts
+      const { data: contactData } = await supabase.from("profile_contacts").select("phone").eq("user_id", user.id).single();
       const p: Profile = {
         name: data.name, age: data.age, gender: data.gender, branch: data.branch,
         bio: data.bio, photo_url: data.photo_url, photos: (data.photos as string[]) || [],
         interests: (data.interests as string[]) || [], looking_for: data.looking_for,
         verified: data.verified, is_verified: (data as any).is_verified ?? false,
-        instagram: data.instagram, phone: data.phone,
+        instagram: data.instagram, phone: contactData?.phone || null,
         semester: (data as any).semester || null,
       };
       setProfile(p);
@@ -149,9 +151,13 @@ const ProfilePage = () => {
     await supabase.from("profiles").update({
       name: form.name, age: form.age, gender: form.gender, branch: form.branch,
       bio: form.bio, interests: form.interests, looking_for: form.looking_for,
-      instagram: form.instagram, phone: form.phone, photos: form.photos,
+      instagram: form.instagram, photos: form.photos,
       semester: form.semester,
     } as any).eq("id", user.id);
+    // Save phone to profile_contacts
+    await supabase.from("profile_contacts").upsert({
+      user_id: user.id, phone: form.phone,
+    }, { onConflict: "user_id" });
     setProfile(form);
     setEditing(false);
     setSaving(false);
