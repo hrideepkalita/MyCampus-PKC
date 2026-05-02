@@ -23,7 +23,7 @@ interface Profile {
   verified: string | null;
   is_verified: boolean;
   instagram: string | null;
-  phone: string | null;
+  phone?: string | null;
 }
 
 const GENDER_FILTERS = ["All", "Male", "Female"] as const;
@@ -225,7 +225,7 @@ const DiscoverPage = () => {
                   lookingFor: (profile.looking_for as any) || "Not sure 🤷",
                   verified: profile.is_verified ? "verified" : (profile.verified as any) || "unverified",
                   instagram: profile.instagram || undefined,
-                  phone: profile.phone || undefined,
+                  phone: undefined,
                 }}
                 onLike={handleLike}
                 onSkip={handleSkip}

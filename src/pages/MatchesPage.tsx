@@ -13,7 +13,7 @@ interface MatchProfile {
   branch: string | null;
   photo_url: string | null;
   instagram: string | null;
-  phone: string | null;
+  phone?: string | null;
   is_verified: boolean;
 }
 
@@ -46,10 +46,17 @@ const MatchesPage = () => {
 
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, name, branch, photo_url, instagram, phone, is_verified")
+      .select("id, name, branch, photo_url, instagram, is_verified")
       .in("id", otherIds);
 
-    setMatches((profiles as MatchProfile[]) || []);
+    // Fetch phone numbers from profile_contacts (only accessible for matched users via RLS)
+    const { data: contacts } = await supabase
+      .from("profile_contacts")
+      .select("user_id, phone")
+      .in("user_id", otherIds);
+    const phoneMap = new Map(contacts?.map(c => [c.user_id, c.phone]) || []);
+
+    setMatches((profiles || []).map(p => ({ ...p, phone: phoneMap.get(p.id) || null })) as MatchProfile[]);
     setLoading(false);
   };
 
