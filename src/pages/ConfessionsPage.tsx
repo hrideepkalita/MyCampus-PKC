@@ -80,7 +80,7 @@ const ConfessionsPage = () => {
     if (error) console.error("[Confessions] Fetch error:", error);
     const rows = (rowsData || []) as unknown as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }>;
 
-    if (!rows) { setLoading(false); return; }
+    if (!rows || rows.length === 0) { setConfessions([]); setLoading(false); return; }
 
     const confessionIds = rows.map(r => r.id);
     const { data: allLikes } = await supabase
