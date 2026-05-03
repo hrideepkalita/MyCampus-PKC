@@ -114,11 +114,12 @@ const ConfessionsPage = () => {
 
     setConfessions(rows.map(r => ({
       ...r,
+      user_id: r.user_id || "",
       is_anonymous: r.is_anonymous ?? true,
       like_count: likeCounts[r.id] || 0,
       user_liked: userLikes.has(r.id),
       user_reported: reportedSet.has(r.id),
-      author_name: r.is_anonymous ? undefined : nameMap.get(r.user_id),
+      author_name: r.is_anonymous ? undefined : (r.user_id ? nameMap.get(r.user_id) : undefined),
     })));
     setLoading(false);
   };
