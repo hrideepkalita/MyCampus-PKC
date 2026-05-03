@@ -319,7 +319,7 @@ const ConfessionsPage = () => {
                   </div>
                   <span className="text-[10px] text-muted-foreground">{timeAgo(confession.created_at)}</span>
                 </div>
-                {isAdmin && confession.is_anonymous && (
+                {isAdmin && confession.is_anonymous && confession.user_id && (
                   <p className="mt-1 text-[10px] text-destructive/70">🔒 UID: {confession.user_id.slice(0, 8)}...</p>
                 )}
                 <p className="mt-3 text-sm leading-relaxed text-foreground">{confession.text}</p>
