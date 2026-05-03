@@ -178,6 +178,9 @@ export type Database = {
           created_at: string
           id: string
           is_anonymous: boolean
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           tag: string
           text: string
           user_id: string
@@ -186,6 +189,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_anonymous?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           tag?: string
           text: string
           user_id: string
@@ -194,6 +200,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_anonymous?: boolean
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           tag?: string
           text?: string
           user_id?: string
@@ -714,6 +723,9 @@ export type Database = {
           created_at: string | null
           id: string | null
           is_anonymous: boolean | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
           tag: string | null
           text: string | null
           user_id: string | null
@@ -722,6 +734,9 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           is_anonymous?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
           tag?: string | null
           text?: string | null
           user_id?: never
@@ -730,6 +745,9 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           is_anonymous?: boolean | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
           tag?: string | null
           text?: string | null
           user_id?: never
