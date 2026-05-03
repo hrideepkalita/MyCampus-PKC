@@ -71,14 +71,16 @@ const ConfessionsPage = () => {
   const fetchConfessions = async () => {
     if (!user) return;
 
-    const { data: rowsData } = await supabase
-      .from("confessions_public" as any)
+    const { data: rowsData, error } = await supabase
+      .from("confessions_safe" as any)
       .select("id, text, tag, created_at, user_id, is_anonymous")
       .order("created_at", { ascending: false })
       .limit(100);
-    const rows = rowsData as unknown as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }> | null;
+    
+    if (error) console.error("[Confessions] Fetch error:", error);
+    const rows = (rowsData || []) as unknown as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }>;
 
-    if (!rows) { setLoading(false); return; }
+    if (!rows || rows.length === 0) { setConfessions([]); setLoading(false); return; }
 
     const confessionIds = rows.map(r => r.id);
     const { data: allLikes } = await supabase
@@ -93,7 +95,7 @@ const ConfessionsPage = () => {
 
     const reportedSet = new Set((userReports || []).map(r => r.confession_id));
 
-    const nonAnonUserIds = [...new Set(rows.filter(r => !r.is_anonymous).map(r => r.user_id))];
+    const nonAnonUserIds = [...new Set(rows.filter(r => !r.is_anonymous && r.user_id).map(r => r.user_id!))];
     let nameMap = new Map<string, string>();
     if (nonAnonUserIds.length > 0) {
       const { data: profiles } = await supabase
@@ -112,11 +114,12 @@ const ConfessionsPage = () => {
 
     setConfessions(rows.map(r => ({
       ...r,
+      user_id: r.user_id || "",
       is_anonymous: r.is_anonymous ?? true,
       like_count: likeCounts[r.id] || 0,
       user_liked: userLikes.has(r.id),
       user_reported: reportedSet.has(r.id),
-      author_name: r.is_anonymous ? undefined : nameMap.get(r.user_id),
+      author_name: r.is_anonymous ? undefined : (r.user_id ? nameMap.get(r.user_id) : undefined),
     })));
     setLoading(false);
   };
@@ -316,7 +319,7 @@ const ConfessionsPage = () => {
                   </div>
                   <span className="text-[10px] text-muted-foreground">{timeAgo(confession.created_at)}</span>
                 </div>
-                {isAdmin && confession.is_anonymous && (
+                {isAdmin && confession.is_anonymous && confession.user_id && (
                   <p className="mt-1 text-[10px] text-destructive/70">🔒 UID: {confession.user_id.slice(0, 8)}...</p>
                 )}
                 <p className="mt-3 text-sm leading-relaxed text-foreground">{confession.text}</p>

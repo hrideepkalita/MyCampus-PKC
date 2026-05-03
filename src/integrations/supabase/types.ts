@@ -90,13 +90,6 @@ export type Database = {
             foreignKeyName: "confession_likes_confession_id_fkey"
             columns: ["confession_id"]
             isOneToOne: false
-            referencedRelation: "confessions_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "confession_likes_confession_id_fkey"
-            columns: ["confession_id"]
-            isOneToOne: false
             referencedRelation: "confessions_safe"
             referencedColumns: ["id"]
           },
@@ -136,13 +129,6 @@ export type Database = {
             foreignKeyName: "confession_replies_confession_id_fkey"
             columns: ["confession_id"]
             isOneToOne: false
-            referencedRelation: "confessions_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "confession_replies_confession_id_fkey"
-            columns: ["confession_id"]
-            isOneToOne: false
             referencedRelation: "confessions_safe"
             referencedColumns: ["id"]
           },
@@ -176,13 +162,6 @@ export type Database = {
             columns: ["confession_id"]
             isOneToOne: false
             referencedRelation: "confessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "confession_reports_confession_id_fkey"
-            columns: ["confession_id"]
-            isOneToOne: false
-            referencedRelation: "confessions_public"
             referencedColumns: ["id"]
           },
           {
@@ -730,33 +709,6 @@ export type Database = {
       }
     }
     Views: {
-      confessions_public: {
-        Row: {
-          created_at: string | null
-          id: string | null
-          is_anonymous: boolean | null
-          tag: string | null
-          text: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string | null
-          is_anonymous?: boolean | null
-          tag?: string | null
-          text?: string | null
-          user_id?: never
-        }
-        Update: {
-          created_at?: string | null
-          id?: string | null
-          is_anonymous?: boolean | null
-          tag?: string | null
-          text?: string | null
-          user_id?: never
-        }
-        Relationships: []
-      }
       confessions_safe: {
         Row: {
           created_at: string | null

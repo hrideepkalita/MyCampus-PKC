@@ -20,11 +20,13 @@ function bufToB64(buf: ArrayBuffer | null) {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function isPreviewIframe() {
+function isUnsupportedEnv() {
   try {
+    // Only block in Lovable's live-preview iframe (not published sites)
     const inIframe = window.self !== window.top;
     const host = window.location.hostname;
-    return inIframe || host.includes("id-preview--") || host.includes("lovableproject.com");
+    const isLovablePreview = host.includes("id-preview--") || host.includes("lovableproject.com");
+    return inIframe && isLovablePreview;
   } catch {
     return true;
   }
@@ -51,7 +53,7 @@ export function usePushNotifications() {
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     "Notification" in window &&
-    !isPreviewIframe();
+    !isUnsupportedEnv();
 
   useEffect(() => {
     if (!supported) {
