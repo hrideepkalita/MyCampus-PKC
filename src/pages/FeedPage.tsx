@@ -216,7 +216,7 @@ const FeedPost = memo(({
    {post.media_url && (
   <div
     ref={containerRef}
-    className="relative w-full bg-black overflow-hidden"
+    className="relative w-full bg-muted overflow-hidden"
   >
     {isVideo ? (
       <>
@@ -229,30 +229,22 @@ const FeedPost = memo(({
           preload="metadata"
           onClick={handleTap}
         />
-
-        {/* MUTE BUTTON */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleMute();
-          }}
+          onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
           className="absolute bottom-2 right-2 z-10 bg-black/50 p-2 rounded-full"
         >
-          {isMuted ? (
-            <VolumeX className="h-4 w-4 text-white" />
-          ) : (
-            <Volume2 className="h-4 w-4 text-white" />
-          )}
+          {isMuted ? <VolumeX className="h-4 w-4 text-white" /> : <Volume2 className="h-4 w-4 text-white" />}
         </button>
       </>
     ) : (
-      <img
-        src={post.media_url}
-        className="w-full max-h-[75vh] object-contain bg-black"
-        loading="lazy"
-        decoding="async"
-        onClick={handleTap}
-      />
+      <FeedImage src={post.media_url} onClick={handleTap} />
+    )}
+
+    {/* Double-tap heart animation */}
+    {heartAnim && (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+        <Heart className="h-24 w-24 fill-red-500 text-red-500 drop-shadow-lg animate-[heartPop_0.6s_ease-out_forwards]" />
+      </div>
     )}
   </div>
 )}
