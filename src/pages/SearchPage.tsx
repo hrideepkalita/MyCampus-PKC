@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import BottomNav from "@/components/BottomNav";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import verifiedBadge from "@/assets/verified-badge.png";
+import DefaultAvatar from "@/components/DefaultAvatar";
 
 interface SearchProfile {
   id: string;
@@ -23,34 +24,52 @@ const SearchPage = () => {
   const [results, setResults] = useState<SearchProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleSearch = async () => {
-    if (!user || !query.trim()) return;
+  const performSearch = useCallback(async (searchTerm: string) => {
+    if (!user || !searchTerm.trim()) {
+      setResults([]);
+      setSearched(false);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setSearched(true);
+    const term = searchTerm.trim().toLowerCase();
 
-    const searchTerm = query.trim().toLowerCase();
-
-    const { data: nameResults } = await supabase
-      .from("profiles")
-      .select("id, name, age, branch, photo_url, interests, is_verified")
-      .neq("id", user.id)
-      .ilike("name", `%${searchTerm}%`)
-      .limit(20);
-
-    const { data: interestResults } = await supabase
-      .from("profiles")
-      .select("id, name, age, branch, photo_url, interests, is_verified")
-      .neq("id", user.id)
-      .contains("interests", [searchTerm])
-      .limit(20);
+    const [{ data: nameResults }, { data: interestResults }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, name, age, branch, photo_url, interests, is_verified")
+        .neq("id", user.id)
+        .ilike("name", `%${term}%`)
+        .limit(10),
+      supabase
+        .from("profiles")
+        .select("id, name, age, branch, photo_url, interests, is_verified")
+        .neq("id", user.id)
+        .contains("interests", [term])
+        .limit(10),
+    ]);
 
     const allResults = [...(nameResults || []), ...(interestResults || [])];
     const unique = Array.from(new Map(allResults.map((r) => [r.id, r])).values());
-
-    setResults(unique as SearchProfile[]);
+    setResults(unique.slice(0, 10) as SearchProfile[]);
     setLoading(false);
-  };
+  }, [user]);
+
+  // Debounced live search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!query.trim()) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => performSearch(query), 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, performSearch]);
 
   return (
     <div className="min-h-[100dvh] bg-background pb-24">
@@ -64,18 +83,11 @@ const SearchPage = () => {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Search by name or interest..."
               autoFocus
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
             />
           </div>
-          <button
-            onClick={handleSearch}
-            className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground flex-shrink-0"
-          >
-            Go
-          </button>
         </div>
       </div>
 
@@ -102,9 +114,7 @@ const SearchPage = () => {
               onClick={() => navigate(`/profile/${profile.id}`)}
               className="w-full flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98] text-left"
             >
-              <div className="h-12 w-12 overflow-hidden rounded-full flex-shrink-0">
-                <img src={profile.photo_url || "/placeholder.svg"} alt={profile.name} className="h-full w-full object-cover" />
-              </div>
+              <DefaultAvatar src={profile.photo_url} alt={profile.name} className="h-12 w-12" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <p className="font-display text-sm font-bold text-foreground truncate">{profile.name}</p>
