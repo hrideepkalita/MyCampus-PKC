@@ -95,7 +95,7 @@ const ConfessionsPage = () => {
 
     const reportedSet = new Set((userReports || []).map(r => r.confession_id));
 
-    const nonAnonUserIds = [...new Set(rows.filter(r => !r.is_anonymous).map(r => r.user_id))];
+    const nonAnonUserIds = [...new Set(rows.filter(r => !r.is_anonymous && r.user_id).map(r => r.user_id!))];
     let nameMap = new Map<string, string>();
     if (nonAnonUserIds.length > 0) {
       const { data: profiles } = await supabase
