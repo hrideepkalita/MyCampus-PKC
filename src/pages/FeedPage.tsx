@@ -31,7 +31,23 @@ interface Post {
   comment_count: number;
 }
 
-const BATCH = 10;
+/* ── Image with skeleton + fade-in ── */
+const FeedImage = ({ src, onClick }: { src: string; onClick: () => void }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="relative w-full bg-muted" style={{ minHeight: loaded ? undefined : "300px" }}>
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
+      <img
+        src={src}
+        className={`w-full max-h-[75vh] object-contain bg-black transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        loading="lazy"
+        decoding="async"
+        onClick={onClick}
+        onLoad={() => setLoaded(true)}
+      />
+    </div>
+  );
+};
 
 /* ── Lightweight post card (memoized) ── */
 const FeedPost = memo(({
