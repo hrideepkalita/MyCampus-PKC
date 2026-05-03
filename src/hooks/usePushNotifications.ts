@@ -53,7 +53,7 @@ export function usePushNotifications() {
     "serviceWorker" in navigator &&
     "PushManager" in window &&
     "Notification" in window &&
-    !isPreviewIframe();
+    !isUnsupportedEnv();
 
   useEffect(() => {
     if (!supported) {
