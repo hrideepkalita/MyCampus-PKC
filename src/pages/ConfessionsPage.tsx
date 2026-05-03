@@ -71,12 +71,14 @@ const ConfessionsPage = () => {
   const fetchConfessions = async () => {
     if (!user) return;
 
-    const { data: rowsData } = await supabase
-      .from("confessions_public" as any)
+    const { data: rowsData, error } = await supabase
+      .from("confessions_safe" as any)
       .select("id, text, tag, created_at, user_id, is_anonymous")
       .order("created_at", { ascending: false })
       .limit(100);
-    const rows = rowsData as unknown as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }> | null;
+    
+    if (error) console.error("[Confessions] Fetch error:", error);
+    const rows = (rowsData || []) as unknown as Array<{ id: string; text: string; tag: string; created_at: string; user_id: string | null; is_anonymous: boolean }>;
 
     if (!rows) { setLoading(false); return; }
 
