@@ -31,6 +31,8 @@ interface Post {
   comment_count: number;
 }
 
+const BATCH = 10;
+
 /* ── Image with skeleton + fade-in ── */
 const FeedImage = ({ src, onClick }: { src: string; onClick: () => void }) => {
   const [loaded, setLoaded] = useState(false);
