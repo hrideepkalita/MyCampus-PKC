@@ -1,31 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { VAPID_PUBLIC_KEY } from "@/lib/push-config";
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
-  return out;
-}
-
-function bufToB64(buf: ArrayBuffer | null) {
-  if (!buf) return "";
-  const bytes = new Uint8Array(buf);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+import { getFirebaseMessaging, getToken, onMessage } from "@/lib/firebase";
+import { toast } from "sonner";
 
 function isUnsupportedEnv() {
   try {
-    // Only block in Lovable's live-preview iframe (not published sites)
     const inIframe = window.self !== window.top;
     const host = window.location.hostname;
-    const isLovablePreview = host.includes("id-preview--") || host.includes("lovableproject.com");
+    const isLovablePreview =
+      host.includes("id-preview--") || host.includes("lovableproject.com");
     return inIframe && isLovablePreview;
   } catch {
     return true;
@@ -34,14 +18,6 @@ function isUnsupportedEnv() {
 
 export type PushPermissionState = "default" | "granted" | "denied" | "unsupported";
 
-/**
- * Manages Web Push subscription lifecycle:
- * - Registers /push-sw.js
- * - Exposes permission state and subscribe()/unsubscribe()
- * - Persists subscription to public.push_subscriptions
- *
- * Disabled inside the Lovable preview iframe to avoid SW pollution.
- */
 export function usePushNotifications() {
   const { user } = useAuth();
   const [permission, setPermission] = useState<PushPermissionState>("default");
@@ -51,27 +27,51 @@ export function usePushNotifications() {
   const supported =
     typeof window !== "undefined" &&
     "serviceWorker" in navigator &&
-    "PushManager" in window &&
     "Notification" in window &&
     !isUnsupportedEnv();
 
+  // Register SW & check existing token
   useEffect(() => {
     if (!supported) {
       setPermission("unsupported");
       return;
     }
     setPermission(Notification.permission as PushPermissionState);
+
+    // Register firebase messaging SW
     navigator.serviceWorker
-      .register("/push-sw.js")
-      .then((reg) => {
-        console.log("[Push] Service worker registered:", reg.scope);
-        return reg.pushManager.getSubscription();
-      })
-      .then((sub) => {
-        console.log("[Push] Existing subscription:", !!sub);
-        setSubscribed(!!sub);
-      })
-      .catch((err) => console.error("[Push] SW registration failed:", err));
+      .register("/firebase-messaging-sw.js")
+      .then((reg) => console.log("[FCM] SW registered:", reg.scope))
+      .catch((err) => console.error("[FCM] SW registration failed:", err));
+
+    // Check if we already have a token stored
+    if (user) {
+      supabase
+        .from("push_subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .then(({ data }) => setSubscribed(!!(data && data.length > 0)));
+    }
+  }, [supported, user]);
+
+  // Foreground message listener
+  useEffect(() => {
+    if (!supported) return;
+    let unsubscribe: (() => void) | undefined;
+
+    (async () => {
+      const messaging = await getFirebaseMessaging();
+      if (!messaging) return;
+      unsubscribe = onMessage(messaging, (payload) => {
+        console.log("[FCM] Foreground message:", payload);
+        const title = payload.notification?.title || payload.data?.title || "MyCampus";
+        const body = payload.notification?.body || payload.data?.body || "";
+        toast(title, { description: body });
+      });
+    })();
+
+    return () => unsubscribe?.();
   }, [supported]);
 
   const subscribe = useCallback(async () => {
@@ -79,40 +79,44 @@ export function usePushNotifications() {
     setBusy(true);
     try {
       const perm = await Notification.requestPermission();
-      console.log("[Push] Permission result:", perm);
+      console.log("[FCM] Permission result:", perm);
       setPermission(perm as PushPermissionState);
       if (perm !== "granted") return false;
 
-      const reg = await navigator.serviceWorker.ready;
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        });
-      }
+      const messaging = await getFirebaseMessaging();
+      if (!messaging) return false;
 
-      const json = sub.toJSON();
-      const p256dh = json.keys?.p256dh || bufToB64(sub.getKey("p256dh"));
-      const auth = json.keys?.auth || bufToB64(sub.getKey("auth"));
+      const reg = await navigator.serviceWorker.getRegistration("/firebase-messaging-sw.js");
 
+      // Get the VAPID key from secrets (stored in edge function env)
+      // For FCM getToken we need the VAPID key from Firebase Console
+      const vapidKey = await fetchVapidKey();
+
+      const token = await getToken(messaging, {
+        vapidKey,
+        serviceWorkerRegistration: reg,
+      });
+
+      console.log("[FCM] Token obtained:", token.slice(0, 20) + "...");
+
+      // Upsert token to DB
       await supabase.from("push_subscriptions").upsert(
         {
           user_id: user.id,
-          endpoint: sub.endpoint,
-          p256dh,
-          auth,
+          endpoint: token, // FCM token stored as endpoint
+          p256dh: "fcm", // marker to identify FCM tokens
+          auth: "fcm",
           user_agent: navigator.userAgent.slice(0, 200),
           updated_at: new Date().toISOString(),
         },
         { onConflict: "endpoint" },
       );
 
-      console.log("[Push] Subscription saved successfully");
+      console.log("[FCM] Token saved successfully");
       setSubscribed(true);
       return true;
     } catch (e) {
-      console.error("Push subscribe failed:", e);
+      console.error("[FCM] Subscribe failed:", e);
       return false;
     } finally {
       setBusy(false);
@@ -123,12 +127,8 @@ export function usePushNotifications() {
     if (!supported || !user) return;
     setBusy(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        await supabase.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
-        await sub.unsubscribe();
-      }
+      // Delete all tokens for this user
+      await supabase.from("push_subscriptions").delete().eq("user_id", user.id);
       setSubscribed(false);
     } finally {
       setBusy(false);
@@ -136,4 +136,14 @@ export function usePushNotifications() {
   }, [supported, user]);
 
   return { supported, permission, subscribed, busy, subscribe, unsubscribe };
+}
+
+/** Fetch the VAPID key via a lightweight edge function call */
+async function fetchVapidKey(): Promise<string> {
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  const res = await fetch(
+    `https://${projectId}.supabase.co/functions/v1/get-vapid-key`,
+  );
+  const { vapidKey } = await res.json();
+  return vapidKey;
 }
