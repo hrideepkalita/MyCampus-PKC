@@ -22,7 +22,7 @@ import ViewProfilePage from "./pages/ViewProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NoticesPage from "./pages/NoticesPage";
 import NotFound from "./pages/NotFound";
-import { useState, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 
 // Context for floating hearts toggle
 interface FloatingHeartsContextType {
@@ -41,6 +41,9 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { loading } = useAuth();
+  useEffect(() => {
+  generateFCMToken();
+}, []);
   const [heartsEnabled, setHeartsEnabled] = useState(() => {
     try {
       return localStorage.getItem("floating_hearts_enabled") === "true";
