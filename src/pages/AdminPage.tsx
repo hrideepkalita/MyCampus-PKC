@@ -35,7 +35,11 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [tab, setTab] = useState<"verify" | "users">("verify");
+  const [tab, setTab] = useState<"verify" | "users" | "notify">("verify");
+  const [notifyUserId, setNotifyUserId] = useState("");
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
