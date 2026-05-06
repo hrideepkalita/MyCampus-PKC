@@ -1,4 +1,3 @@
-import { generateFCMToken } from "@/lib/firebase";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import FloatingHearts from "@/components/FloatingHearts";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SplashScreen from "@/components/SplashScreen";
@@ -41,10 +41,17 @@ export const useFloatingHearts = () => useContext(FloatingHeartsContext);
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
+  const { supported, permission, subscribed, subscribe } = usePushNotifications();
+
+  // Auto-subscribe to push notifications when user is logged in
   useEffect(() => {
-  generateFCMToken();
-}, []);
+    if (user && supported && permission !== "denied" && !subscribed) {
+      subscribe().then((ok) => {
+        if (ok) console.log("[Push] Auto-subscribed successfully");
+      });
+    }
+  }, [user, supported, permission, subscribed, subscribe]);
   const [heartsEnabled, setHeartsEnabled] = useState(() => {
     try {
       return localStorage.getItem("floating_hearts_enabled") === "true";

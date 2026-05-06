@@ -22,46 +22,4 @@ export async function getFirebaseMessaging() {
   messagingInstance = getMessaging(app);
   return messagingInstance;
 }
-export async function generateFCMToken() {
-  try {
-    const permission = await Notification.requestPermission();
-
-    if (permission !== "granted") {
-      console.log("❌ Notification permission not granted");
-      return null;
-    }
-
-    const messaging = await getFirebaseMessaging();
-
-    if (!messaging) {
-      console.log("❌ Firebase messaging not supported");
-      return null;
-    }
-
-    const token = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_VAPID_KEY, // make sure this exists
-    });
-
-    if (token) {
-      console.log("🔥 FCM TOKEN:", token);
-
-      // Save to backend
-      await fetch("/api/save-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      return token;
-    } else {
-      console.log("❌ No token received");
-      return null;
-    }
-  } catch (error) {
-    console.error("❌ Error generating FCM token:", error);
-    return null;
-  }
-}
 export { getToken, onMessage };
