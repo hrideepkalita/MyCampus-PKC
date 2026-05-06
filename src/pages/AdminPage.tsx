@@ -172,7 +172,10 @@ const AdminPage = () => {
             Verification {requests.length > 0 && `(${requests.length})`}
           </button>
           <button onClick={() => setTab("users")} className={`flex-1 rounded-full py-2 text-xs font-semibold transition-colors ${tab === "users" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-            <Users className="h-3 w-3 inline mr-1" /> All Users ({allUsers.length})
+            <Users className="h-3 w-3 inline mr-1" /> Users
+          </button>
+          <button onClick={() => setTab("notify")} className={`flex-1 rounded-full py-2 text-xs font-semibold transition-colors ${tab === "notify" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            <Bell className="h-3 w-3 inline mr-1" /> Notify
           </button>
         </div>
 
