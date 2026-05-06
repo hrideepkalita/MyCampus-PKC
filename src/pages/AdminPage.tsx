@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, X, Shield, Users } from "lucide-react";
+import { ArrowLeft, Check, X, Shield, Users, Bell, Send } from "lucide-react";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
@@ -35,7 +35,11 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [tab, setTab] = useState<"verify" | "users">("verify");
+  const [tab, setTab] = useState<"verify" | "users" | "notify">("verify");
+  const [notifyUserId, setNotifyUserId] = useState("");
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyMessage, setNotifyMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -168,7 +172,10 @@ const AdminPage = () => {
             Verification {requests.length > 0 && `(${requests.length})`}
           </button>
           <button onClick={() => setTab("users")} className={`flex-1 rounded-full py-2 text-xs font-semibold transition-colors ${tab === "users" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-            <Users className="h-3 w-3 inline mr-1" /> All Users ({allUsers.length})
+            <Users className="h-3 w-3 inline mr-1" /> Users
+          </button>
+          <button onClick={() => setTab("notify")} className={`flex-1 rounded-full py-2 text-xs font-semibold transition-colors ${tab === "notify" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            <Bell className="h-3 w-3 inline mr-1" /> Notify
           </button>
         </div>
 
@@ -217,7 +224,7 @@ const AdminPage = () => {
               </div>
             )}
           </>
-        ) : (
+        ) : tab === "users" ? (
           <div className="space-y-2">
             {allUsers.map(u => (
               <button key={u.id} onClick={() => navigate(`/profile/${u.id}`)} className="w-full flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98]">
@@ -232,6 +239,67 @@ const AdminPage = () => {
                 <p className="text-xs text-muted-foreground">{u.branch || "—"}</p>
               </button>
             ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Send a custom push + in-app notification to any user.</p>
+            <div>
+              <label className="text-xs font-semibold text-foreground">Target User</label>
+              <select
+                value={notifyUserId}
+                onChange={(e) => setNotifyUserId(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Select a user…</option>
+                {allUsers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.id.slice(0, 8)})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-foreground">Title</label>
+              <input
+                value={notifyTitle}
+                onChange={(e) => setNotifyTitle(e.target.value)}
+                placeholder="Notification title"
+                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-foreground">Message</label>
+              <textarea
+                value={notifyMessage}
+                onChange={(e) => setNotifyMessage(e.target.value)}
+                placeholder="Notification body"
+                rows={3}
+                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground resize-none"
+              />
+            </div>
+            <button
+              disabled={sending || !notifyUserId || !notifyTitle}
+              onClick={async () => {
+                setSending(true);
+                try {
+                  const { error } = await supabase.rpc("create_notification", {
+                    _target_user_id: notifyUserId,
+                    _type: "general",
+                    _title: notifyTitle,
+                    _message: notifyMessage || "",
+                  });
+                  if (error) throw error;
+                  toast.success("Notification sent! Check push + in-app.");
+                  setNotifyTitle("");
+                  setNotifyMessage("");
+                } catch (err: any) {
+                  toast.error("Failed: " + err.message);
+                } finally {
+                  setSending(false);
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform"
+            >
+              <Send className="h-4 w-4" /> {sending ? "Sending…" : "Send Notification"}
+            </button>
           </div>
         )}
       </div>
