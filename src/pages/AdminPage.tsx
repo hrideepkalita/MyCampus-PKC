@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, X, Shield, Users } from "lucide-react";
+import { ArrowLeft, Check, X, Shield, Users, Bell, Send } from "lucide-react";
 import DefaultAvatar from "@/components/DefaultAvatar";
 import verifiedBadge from "@/assets/verified-badge.png";
 import { toast } from "sonner";
