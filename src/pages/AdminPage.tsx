@@ -155,68 +155,7 @@ const AdminPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/90" onClick={() => setPreviewImage(null)}>
           <img src={previewImage} alt="ID Card" className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain" />
         </div>
-        ) : tab === "notify" ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Send a custom push + in-app notification to any user.</p>
-            <div>
-              <label className="text-xs font-semibold text-foreground">Target User</label>
-              <select
-                value={notifyUserId}
-                onChange={(e) => setNotifyUserId(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Select a user…</option>
-                {allUsers.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.id.slice(0, 8)})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-foreground">Title</label>
-              <input
-                value={notifyTitle}
-                onChange={(e) => setNotifyTitle(e.target.value)}
-                placeholder="Notification title"
-                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-foreground">Message</label>
-              <textarea
-                value={notifyMessage}
-                onChange={(e) => setNotifyMessage(e.target.value)}
-                placeholder="Notification body"
-                rows={3}
-                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground resize-none"
-              />
-            </div>
-            <button
-              disabled={sending || !notifyUserId || !notifyTitle}
-              onClick={async () => {
-                setSending(true);
-                try {
-                  const { error } = await supabase.rpc("create_notification", {
-                    _target_user_id: notifyUserId,
-                    _type: "general",
-                    _title: notifyTitle,
-                    _message: notifyMessage || "",
-                  });
-                  if (error) throw error;
-                  toast.success("Notification sent! Check push + in-app.");
-                  setNotifyTitle("");
-                  setNotifyMessage("");
-                } catch (err: any) {
-                  toast.error("Failed: " + err.message);
-                } finally {
-                  setSending(false);
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform"
-            >
-              <Send className="h-4 w-4" /> {sending ? "Sending…" : "Send Notification"}
-            </button>
-          </div>
-        )}
+      )}
 
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
@@ -285,7 +224,7 @@ const AdminPage = () => {
               </div>
             )}
           </>
-        ) : (
+        ) : tab === "users" ? (
           <div className="space-y-2">
             {allUsers.map(u => (
               <button key={u.id} onClick={() => navigate(`/profile/${u.id}`)} className="w-full flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98]">
@@ -300,6 +239,67 @@ const AdminPage = () => {
                 <p className="text-xs text-muted-foreground">{u.branch || "—"}</p>
               </button>
             ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Send a custom push + in-app notification to any user.</p>
+            <div>
+              <label className="text-xs font-semibold text-foreground">Target User</label>
+              <select
+                value={notifyUserId}
+                onChange={(e) => setNotifyUserId(e.target.value)}
+                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Select a user…</option>
+                {allUsers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.id.slice(0, 8)})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-foreground">Title</label>
+              <input
+                value={notifyTitle}
+                onChange={(e) => setNotifyTitle(e.target.value)}
+                placeholder="Notification title"
+                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-foreground">Message</label>
+              <textarea
+                value={notifyMessage}
+                onChange={(e) => setNotifyMessage(e.target.value)}
+                placeholder="Notification body"
+                rows={3}
+                className="mt-1 w-full rounded-xl bg-card border border-border px-3 py-2 text-sm text-foreground resize-none"
+              />
+            </div>
+            <button
+              disabled={sending || !notifyUserId || !notifyTitle}
+              onClick={async () => {
+                setSending(true);
+                try {
+                  const { error } = await supabase.rpc("create_notification", {
+                    _target_user_id: notifyUserId,
+                    _type: "general",
+                    _title: notifyTitle,
+                    _message: notifyMessage || "",
+                  });
+                  if (error) throw error;
+                  toast.success("Notification sent! Check push + in-app.");
+                  setNotifyTitle("");
+                  setNotifyMessage("");
+                } catch (err: any) {
+                  toast.error("Failed: " + err.message);
+                } finally {
+                  setSending(false);
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform"
+            >
+              <Send className="h-4 w-4" /> {sending ? "Sending…" : "Send Notification"}
+            </button>
           </div>
         )}
       </div>
