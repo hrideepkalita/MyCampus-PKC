@@ -91,6 +91,8 @@ const AppContent = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
