@@ -1,26 +1,32 @@
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
+import luitxLogo from "@/assets/luitx-logo.png";
 
 const SplashScreen = () => (
-  <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
+  <div className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-black px-6 py-16">
+    <div className="flex-1" />
     <motion.div
       initial={{ scale: 0.7, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
       className="flex flex-col items-center"
     >
-      <img src={logo} alt="MyCampus" className="h-24 w-24 drop-shadow-lg" />
-      <h1 className="mt-4 font-display text-2xl font-bold text-foreground drop-shadow-sm">
+      <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-white shadow-lg">
+        <img src={logo} alt="MyCampus" className="h-20 w-20 object-contain" />
+      </div>
+      <h1 className="mt-6 font-display text-3xl font-bold text-white">
         MyCampus
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-       Computer Science Department , Pub Kamrup College
+      <p className="mt-2 text-sm text-white/60">
+        Computer Science Department , Pub Kamrup College
       </p>
-      <div className="mt-8 h-6 w-6 animate-spin rounded-full border-3 border-primary border-t-transparent" />
     </motion.div>
-    <p className="absolute bottom-6 text-xs text-muted-foreground/70">
-      Crafted with ❤️ by LuitX
-    </p>
+    <div className="flex flex-1 flex-col items-center justify-end">
+      <p className="text-xs text-white/80">
+        Crafted with <span className="text-red-500">❤️</span> by
+      </p>
+      <img src={luitxLogo} alt="LuitX" className="mt-2 h-12 object-contain" />
+    </div>
   </div>
 );
 
