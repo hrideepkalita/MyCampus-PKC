@@ -76,7 +76,7 @@ const AppContent = () => {
   };
 
   // Show splash while checking auth
-  if (loading) {
+  if (loading || !minSplashElapsed) {
     return <SplashScreen />;
   }
 
