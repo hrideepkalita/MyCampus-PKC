@@ -139,14 +139,18 @@ const NoticesPage = () => {
       <TopBar
         title="Notices"
         rightContent={
-          user && canPost ? (
-            <button
-              onClick={() => setShowCompose(prev => !prev)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          ) : null
+          <button
+            onClick={() => {
+              if (!canPost) {
+                toast.error("Only verified union members can post notices");
+                return;
+              }
+              setShowCompose((prev) => !prev);
+            }}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
         }
       />
 
