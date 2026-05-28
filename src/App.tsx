@@ -43,6 +43,13 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const { loading, user } = useAuth();
   const { supported, permission, subscribed, subscribe } = usePushNotifications();
+  const [minSplashElapsed, setMinSplashElapsed] = useState(false);
+
+  // Show splash for at least 2 seconds on app open
+  useEffect(() => {
+    const t = setTimeout(() => setMinSplashElapsed(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   // Auto-subscribe to push notifications when user is logged in
   useEffect(() => {
