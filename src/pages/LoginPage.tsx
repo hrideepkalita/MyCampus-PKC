@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
-import FloatingHearts from "@/components/FloatingHearts";
+import luitxLogo from "@/assets/luitx-logo.png";
 import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage = () => {
@@ -57,19 +57,20 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6 overflow-hidden">
-      <FloatingHearts count={15} />
-      <div className="relative z-10 w-full max-w-sm animate-pop-in">
+    <div className="relative flex min-h-[100dvh] flex-col items-center bg-black px-6 pb-6 pt-[28vh] overflow-hidden">
+      <div className="relative z-10 w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <img src={logo} alt="MyCampus" className="h-20 w-20 mb-3" />
-          <h1 className="font-display text-2xl font-bold text-foreground">MyCampus</h1>
-         <div className="text-sm text-muted-foreground mt-1 text-center">
-         <p>Computer Science Department</p>
-         <p>Pub Kamrup College, Baihata Chariali</p>
+          <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-white shadow-lg">
+            <img src={logo} alt="MyCampus" loading="eager" decoding="sync" className="h-20 w-20 object-contain" />
+          </div>
+          <h1 className="mt-5 font-display text-3xl font-bold text-white">MyCampus</h1>
+          <div className="text-sm text-white/70 mt-2 text-center leading-relaxed">
+            <p>Computer Science Department</p>
+            <p>Pub Kamrup College, Baihata Chariali</p>
+          </div>
         </div>
-       </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {isSignUp && (
             <>
               <input
@@ -78,7 +79,7 @@ const LoginPage = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <div className="flex gap-2">
                 {["Male", "Female", "Other"].map((g) => (
@@ -89,7 +90,7 @@ const LoginPage = () => {
                     className={`flex-1 rounded-xl py-2.5 text-xs font-semibold transition-colors ${
                       gender === g
                         ? "bg-primary text-primary-foreground"
-                        : "border border-border bg-card text-muted-foreground"
+                        : "border border-white/10 bg-[#1a1d2e] text-white/60"
                     }`}
                   >
                     {g}
@@ -104,7 +105,7 @@ const LoginPage = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <div className="relative">
             <input
@@ -114,16 +115,27 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full rounded-xl border border-border bg-card px-4 py-3 pr-11 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 pr-11 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+
+          {!isSignUp && (
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+          )}
 
           {error && (
             <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
@@ -135,13 +147,13 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-primary py-3 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
           >
             {loading ? "Please wait..." : isSignUp ? "Create Account" : "Log In"}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-5 text-center text-sm text-white/70">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
             onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }}
@@ -151,9 +163,15 @@ const LoginPage = () => {
           </button>
         </p>
       </div>
-      <p className="absolute bottom-6 text-xs text-muted-foreground/70">
-        Crafted with ❤️ by LuitX
-      </p>
+
+      <div className="mt-auto flex flex-col items-center pt-10">
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-white/80 font-serif italic">
+            Crafted with <span className="text-red-500">❤️</span> by
+          </p>
+          <img src={luitxLogo} alt="LuitX" loading="eager" decoding="sync" className="h-7 object-contain" />
+        </div>
+      </div>
     </div>
   );
 };
