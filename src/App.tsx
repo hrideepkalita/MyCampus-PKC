@@ -11,6 +11,8 @@ import FloatingHearts from "@/components/FloatingHearts";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SplashScreen from "@/components/SplashScreen";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import FeedPage from "./pages/FeedPage";
 import FriendsPage from "./pages/FriendsPage";
 import DiscoverPage from "./pages/DiscoverPage";
