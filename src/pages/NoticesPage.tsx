@@ -48,14 +48,14 @@ const NoticesPage = () => {
   const checkPermission = async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("profiles")
-      .select("is_verified, role")
-      .eq("id", user.id)
-      .single();
-    if (data && (data as any).is_verified && (data as any).role === "union") {
-      setCanPost(true);
-    }
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (data) setCanPost(true);
   };
+
 
   const fetchNotices = async () => {
     const { data } = await supabase
@@ -95,7 +95,7 @@ const NoticesPage = () => {
 
   const handlePost = async () => {
     if (!user || !canPost || !title.trim() || !description.trim()) {
-      if (!canPost) toast.error("Only verified union members can post notices");
+      if (!canPost) toast.error("Only administrators can manage notices");
       return;
     }
     await supabase.from("notices").insert({
@@ -142,7 +142,7 @@ const NoticesPage = () => {
           <button
             onClick={() => {
               if (!canPost) {
-                toast.error("Only verified union members can post notices");
+                toast.error("Only administrators can manage notices");
                 return;
               }
               setShowCompose((prev) => !prev);
