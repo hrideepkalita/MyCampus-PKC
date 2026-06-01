@@ -11,14 +11,14 @@ const SplashScreen = () => (
       transition={{ type: "spring", stiffness: 200, damping: 20 }}
       className="flex flex-col items-center"
     >
-      <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-white shadow-lg">
-        <img src={logo} alt="MyCampus" className="h-20 w-20 object-contain" />
+      <div className="flex h-36 w-36 items-center justify-center rounded-[2rem] bg-white shadow-xl">
+        <img src={logo} alt="MyCampus" className="h-28 w-28 object-contain" />
       </div>
-      <h1 className="mt-6 font-display text-3xl font-bold text-white">
+      <h1 className="mt-8 font-display text-4xl font-bold text-white">
         MyCampus
       </h1>
-      <p className="mt-2 text-sm text-white/60">
-        Computer Science Department , Pub Kamrup College
+      <p className="mt-3 text-sm text-white/60 text-center leading-relaxed">
+        Computer Science Department<br />Pub Kamrup College
       </p>
     </motion.div>
     <div className="flex flex-1 flex-col items-center justify-end">
