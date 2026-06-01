@@ -114,24 +114,26 @@ const NoticesPage = () => {
 
   return (
     <SwipeWrapper next="/confessions" prev="/friends" className="min-h-[100dvh] bg-background pb-24">
-      {/* Fullscreen notice */} 
+      {/* Fullscreen notice */}
       {selectedNotice && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-background overflow-auto">
-          <div className="sticky top-0 z-10 flex items-center gap-3 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3">
+        <div className="fixed inset-0 z-50 flex flex-col bg-background">
+          <div className="shrink-0 flex items-center gap-3 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3">
             <button onClick={() => setSelectedNotice(null)} className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground">
               <X className="h-4 w-4" />
             </button>
             <h2 className="font-display text-base font-bold text-foreground truncate">{selectedNotice.title}</h2>
           </div>
-          {selectedNotice.image_url && (
-            <img src={selectedNotice.image_url} alt="" className="w-full max-h-[50vh] object-contain bg-muted" />
-          )}
-          <div className="px-4 py-4">
-            <h1 className="font-display text-xl font-bold text-foreground">{selectedNotice.title}</h1>
-            <p className="mt-1 text-xs text-muted-foreground">
-              By {selectedNotice.author_name} · {timeAgo(selectedNotice.created_at)}
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">{selectedNotice.description}</p>
+          <div className="flex-1 overflow-y-auto">
+            {selectedNotice.image_url && (
+              <img src={selectedNotice.image_url} alt="" className="w-full max-h-[50vh] object-contain bg-muted" />
+            )}
+            <div className="px-4 py-5">
+              <h1 className="font-display text-xl font-bold text-foreground break-words leading-snug">{selectedNotice.title}</h1>
+              <p className="mt-2 text-xs text-muted-foreground">
+                By {selectedNotice.author_name} · {timeAgo(selectedNotice.created_at)}
+              </p>
+              <p className="mt-5 text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">{selectedNotice.description}</p>
+            </div>
           </div>
         </div>
       )}

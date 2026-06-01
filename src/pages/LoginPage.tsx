@@ -57,14 +57,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center bg-black px-6 pb-6 pt-[28vh] overflow-hidden">
+    <div className="relative flex min-h-[100dvh] flex-col items-center bg-black px-6 pb-6 pt-[22vh] overflow-hidden">
       <div className="relative z-10 w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-white shadow-lg">
-            <img src={logo} alt="MyCampus" loading="eager" decoding="sync" className="h-20 w-20 object-contain" />
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex h-36 w-36 items-center justify-center rounded-[2rem] bg-white shadow-xl">
+            <img src={logo} alt="MyCampus" loading="eager" decoding="sync" className="h-28 w-28 object-contain" />
           </div>
-          <h1 className="mt-5 font-display text-3xl font-bold text-white">MyCampus</h1>
-          <div className="text-sm text-white/70 mt-2 text-center leading-relaxed">
+          <h1 className="mt-7 font-display text-4xl font-bold text-white">MyCampus</h1>
+          <div className="text-sm text-white/70 mt-3 text-center leading-relaxed">
             <p>Computer Science Department</p>
             <p>Pub Kamrup College, Baihata Chariali</p>
           </div>
