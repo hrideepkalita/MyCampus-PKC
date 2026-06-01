@@ -226,6 +226,10 @@ const AdminPage = () => {
           </>
         ) : tab === "users" ? (
           <div className="space-y-2">
+            <div className="rounded-2xl bg-card p-3 mb-2 flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">Total Registered Users</span>
+              <span className="font-display text-lg font-bold text-primary">{allUsers.length}</span>
+            </div>
             {allUsers.map(u => (
               <button key={u.id} onClick={() => navigate(`/profile/${u.id}`)} className="w-full flex items-center gap-3 rounded-2xl bg-card p-3 transition-all active:scale-[0.98]">
                 <DefaultAvatar src={u.photo_url} alt={u.name} className="h-10 w-10" />
@@ -240,6 +244,7 @@ const AdminPage = () => {
               </button>
             ))}
           </div>
+
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">Send a custom push + in-app notification to any user.</p>
