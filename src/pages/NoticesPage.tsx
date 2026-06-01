@@ -95,7 +95,7 @@ const NoticesPage = () => {
 
   const handlePost = async () => {
     if (!user || !canPost || !title.trim() || !description.trim()) {
-      if (!canPost) toast.error("Only verified union members can post notices");
+      if (!canPost) toast.error("Only administrators can manage notices");
       return;
     }
     await supabase.from("notices").insert({
@@ -142,7 +142,7 @@ const NoticesPage = () => {
           <button
             onClick={() => {
               if (!canPost) {
-                toast.error("Only verified union members can post notices");
+                toast.error("Only administrators can manage notices");
                 return;
               }
               setShowCompose((prev) => !prev);
