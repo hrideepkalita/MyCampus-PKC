@@ -47,7 +47,16 @@ const AdminPage = () => {
     if (!isAdmin) return;
     fetchRequests();
     fetchAllUsers();
+
+    const channel = supabase
+      .channel("admin-profiles")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        fetchAllUsers();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [isAdmin]);
+
 
   const fetchRequests = async () => {
     setLoading(true);
