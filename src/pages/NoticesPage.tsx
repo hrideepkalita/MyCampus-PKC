@@ -48,14 +48,14 @@ const NoticesPage = () => {
   const checkPermission = async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("profiles")
-      .select("is_verified, role")
-      .eq("id", user.id)
-      .single();
-    if (data && (data as any).is_verified && (data as any).role === "union") {
-      setCanPost(true);
-    }
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (data) setCanPost(true);
   };
+
 
   const fetchNotices = async () => {
     const { data } = await supabase
