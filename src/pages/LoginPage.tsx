@@ -46,7 +46,13 @@ const LoginPage = () => {
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          if (/confirm/i.test(error.message)) {
+            navigate(`/verify-otp?email=${encodeURIComponent(email)}&type=signup`);
+            return;
+          }
+          throw error;
+        }
         navigate("/feed");
       }
     } catch (err: any) {
