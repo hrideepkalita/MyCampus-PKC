@@ -7,6 +7,7 @@ import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -14,7 +15,6 @@ const ResetPasswordPage = () => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Supabase auto-handles recovery token from URL hash
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
     });
@@ -24,15 +24,24 @@ const ResetPasswordPage = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const validate = () => {
+    if (password.length < 8) return "Password must be at least 8 characters";
+    if (password !== confirm) return "Passwords do not match";
+    return "";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const v = validate();
+    if (v) { setError(v); return; }
     setError("");
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setDone(true);
-      setTimeout(() => navigate("/feed", { replace: true }), 2000);
+      await supabase.auth.signOut();
+      setTimeout(() => navigate("/", { replace: true }), 2000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -41,7 +50,7 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[20vh]">
+    <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[18vh]">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-lg">
@@ -55,18 +64,18 @@ const ResetPasswordPage = () => {
           <div className="rounded-2xl border border-white/10 bg-[#1a1d2e] p-6 text-center">
             <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
             <h2 className="mt-3 font-display text-lg font-bold text-white">Password Updated</h2>
-            <p className="mt-2 text-sm text-white/70">Redirecting...</p>
+            <p className="mt-2 text-sm text-white/70">Redirecting to login...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="New password"
+                placeholder="New password (min 8 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 pr-11 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button
@@ -77,12 +86,21 @@ const ResetPasswordPage = () => {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Confirm new password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              minLength={8}
+              className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
             {error && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
             )}
             {!ready && (
               <p className="rounded-lg bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500">
-                Waiting for recovery session...
+                Waiting for verification session...
               </p>
             )}
             <button
