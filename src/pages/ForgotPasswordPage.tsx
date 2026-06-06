@@ -10,7 +10,6 @@ const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +20,7 @@ const ForgotPasswordPage = () => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      setSent(true);
+      navigate(`/verify-otp?email=${encodeURIComponent(email)}&type=recovery`);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -45,25 +44,11 @@ const ForgotPasswordPage = () => {
           </div>
           <h1 className="mt-5 font-display text-2xl font-bold text-white">Forgot Password</h1>
           <p className="mt-2 text-sm text-white/60 text-center">
-            Enter your registered email to receive a password reset link.
+            Enter your registered email and we'll send you a 6-digit verification code.
           </p>
         </div>
 
-        {sent ? (
-          <div className="rounded-2xl border border-white/10 bg-[#1a1d2e] p-6 text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-            <h2 className="mt-3 font-display text-lg font-bold text-white">Email Sent</h2>
-            <p className="mt-2 text-sm text-white/70">
-              Check <span className="font-semibold text-white">{email}</span> for the password reset link.
-            </p>
-            <Link
-              to="/"
-              className="mt-5 inline-block w-full rounded-xl bg-primary py-3 font-display text-sm font-bold text-primary-foreground"
-            >
-              Back to Login
-            </Link>
-          </div>
-        ) : (
+        {(
           <form onSubmit={handleSubmit} className="space-y-3">
             <input
               type="email"
