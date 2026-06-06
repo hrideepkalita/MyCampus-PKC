@@ -66,7 +66,7 @@ const ForgotPasswordPage = () => {
               disabled={loading}
               className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
             >
-              {loading ? "Sending..." : "Send Reset Link"}
+              {loading ? "Sending..." : "Send Verification Code"}
             </button>
           </form>
         )}
