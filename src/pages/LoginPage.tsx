@@ -40,7 +40,7 @@ const LoginPage = () => {
           },
         });
         if (error) throw error;
-        setMessage("Check your email to confirm your account!");
+        navigate(`/verify-otp?email=${encodeURIComponent(email)}&type=signup`);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
