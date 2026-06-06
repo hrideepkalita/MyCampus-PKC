@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import luitxLogo from "@/assets/luitx-logo.png";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 const ForgotPasswordPage = () => {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +20,7 @@ const ForgotPasswordPage = () => {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      navigate(`/verify-otp?email=${encodeURIComponent(email)}&type=recovery`);
+      setSent(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -44,30 +44,46 @@ const ForgotPasswordPage = () => {
           </div>
           <h1 className="mt-5 font-display text-2xl font-bold text-white">Forgot Password</h1>
           <p className="mt-2 text-sm text-white/60 text-center">
-            Enter your registered email and we'll send you a 6-digit verification code.
+            Enter your registered email to receive a password reset link.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="email"
-            placeholder="Email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {error && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
-          >
-            {loading ? "Sending..." : "Send Verification Code"}
-          </button>
-        </form>
+        {sent ? (
+          <div className="rounded-2xl border border-white/10 bg-[#1a1d2e] p-6 text-center">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
+            <h2 className="mt-3 font-display text-lg font-bold text-white">Email Sent</h2>
+            <p className="mt-2 text-sm text-white/70">
+              Check <span className="font-semibold text-white">{email}</span> for the password reset link.
+            </p>
+            <Link
+              to="/"
+              className="mt-5 inline-block w-full rounded-xl bg-primary py-3 font-display text-sm font-bold text-primary-foreground"
+            >
+              Back to Login
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input
+              type="email"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            {error && (
+              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
+            >
+              {loading ? "Sending..." : "Send Reset Link"}
+            </button>
+          </form>
+        )}
       </div>
 
       <div className="mt-auto flex items-center gap-2 pt-10">

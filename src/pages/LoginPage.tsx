@@ -40,19 +40,13 @@ const LoginPage = () => {
           },
         });
         if (error) throw error;
-        navigate(`/verify-otp?email=${encodeURIComponent(email)}&type=signup`);
+        setMessage("Check your email to confirm your account!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) {
-          if (/confirm/i.test(error.message)) {
-            navigate(`/verify-otp?email=${encodeURIComponent(email)}&type=signup`);
-            return;
-          }
-          throw error;
-        }
+        if (error) throw error;
         navigate("/feed");
       }
     } catch (err: any) {
