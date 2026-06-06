@@ -48,28 +48,26 @@ const ForgotPasswordPage = () => {
           </p>
         </div>
 
-        {(
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-            {error && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
-            >
-              {loading ? "Sending..." : "Send Verification Code"}
-            </button>
-          </form>
-        )}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? "Sending..." : "Send Verification Code"}
+          </button>
+        </form>
       </div>
 
       <div className="mt-auto flex items-center gap-2 pt-10">
