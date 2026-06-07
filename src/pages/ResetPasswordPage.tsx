@@ -15,13 +15,67 @@ const ResetPasswordPage = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[ResetPassword] auth event:", event, !!session);
       if (session && (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
         setReady(true);
       }
     });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true);
-    });
+
+    (async () => {
+      try {
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+        const hash = window.location.hash;
+
+        // Handle errors in URL
+        const errDesc = url.searchParams.get("error_description") || new URLSearchParams(hash.replace(/^#/, "")).get("error_description");
+        if (errDesc) {
+          setError(decodeURIComponent(errDesc));
+          return;
+        }
+
+        // PKCE code flow (?code=...)
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error("[ResetPassword] exchangeCodeForSession error:", error);
+            setError(error.message);
+            return;
+          }
+          if (data.session) {
+            setReady(true);
+            // Clean URL
+            window.history.replaceState({}, "", "/reset-password");
+            return;
+          }
+        }
+
+        // Implicit/hash flow (#access_token=...&type=recovery)
+        if (hash && hash.includes("access_token")) {
+          const params = new URLSearchParams(hash.replace(/^#/, ""));
+          const access_token = params.get("access_token");
+          const refresh_token = params.get("refresh_token");
+          if (access_token && refresh_token) {
+            const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+            if (error) {
+              setError(error.message);
+              return;
+            }
+            setReady(true);
+            window.history.replaceState({}, "", "/reset-password");
+            return;
+          }
+        }
+
+        // Fallback: existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) setReady(true);
+      } catch (e: any) {
+        console.error("[ResetPassword] init error:", e);
+        setError(e.message || "Failed to initialize recovery session.");
+      }
+    })();
+
     return () => subscription.unsubscribe();
   }, []);
 
