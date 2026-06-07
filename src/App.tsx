@@ -13,6 +13,8 @@ import SplashScreen from "@/components/SplashScreen";
 import LoginPage from "./pages/LoginPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import EmailVerifiedPage from "./pages/EmailVerifiedPage";
+import PasswordResetSuccessPage from "./pages/PasswordResetSuccessPage";
 import FeedPage from "./pages/FeedPage";
 import FriendsPage from "./pages/FriendsPage";
 import DiscoverPage from "./pages/DiscoverPage";
@@ -93,6 +95,8 @@ const AppContent = () => {
             <Route path="/" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/email-verified" element={<EmailVerifiedPage />} />
+            <Route path="/password-reset-success" element={<PasswordResetSuccessPage />} />
             <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
             <Route path="/discover" element={<ProtectedRoute><DiscoverPage /></ProtectedRoute>} />
             <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />

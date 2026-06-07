@@ -27,23 +27,36 @@ const LoginPage = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (isSignUp && !normalizedEmail.endsWith("@gmail.com")) {
+      setError("Only Gmail accounts are allowed for MyCampus registration.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
           options: {
             data: { name, gender },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/email-verified`,
           },
         });
-        if (error) throw error;
+        if (error) {
+          if (/Only Gmail accounts/i.test(error.message)) {
+            throw new Error("Only Gmail accounts are allowed for MyCampus registration.");
+          }
+          throw error;
+        }
         setMessage("Check your email to confirm your account!");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: normalizedEmail,
           password,
         });
         if (error) throw error;

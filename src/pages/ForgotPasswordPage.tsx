@@ -14,9 +14,14 @@ const ForgotPasswordPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.endsWith("@gmail.com")) {
+      setError("Only Gmail accounts are allowed for MyCampus registration.");
+      return;
+    }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
