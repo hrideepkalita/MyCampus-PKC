@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
-import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -59,49 +59,51 @@ const ResetPasswordPage = () => {
           <p className="mt-2 text-sm text-white/60 text-center">Enter your new password below.</p>
         </div>
 
-        {done ? (
-          <div className="rounded-2xl border border-white/10 bg-[#1a1d2e] p-6 text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-            <h2 className="mt-3 font-display text-lg font-bold text-white">Password Updated</h2>
-            <p className="mt-2 text-sm text-white/70">Redirecting...</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="New password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 pr-11 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-            {error && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
-            )}
-            {!ready && (
-              <p className="rounded-lg bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500">
-                Waiting for recovery session...
-              </p>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="New password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 pr-11 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
             <button
-              type="submit"
-              disabled={loading || !ready}
-              className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
             >
-              {loading ? "Updating..." : "Update Password"}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-          </form>
-        )}
+          </div>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Confirm new password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={6}
+            className="w-full rounded-xl border border-white/10 bg-[#1a1d2e] px-4 py-3.5 text-sm text-white placeholder:text-white/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          />
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+          )}
+          {!ready && (
+            <p className="rounded-lg bg-yellow-500/10 px-3 py-2 text-xs text-yellow-500">
+              Waiting for recovery session...
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loading || !ready}
+            className="w-full rounded-xl bg-primary py-3.5 font-display text-sm font-bold text-primary-foreground transition-all active:scale-[0.98] hover:opacity-90 disabled:opacity-50"
+          >
+            {loading ? "Updating..." : "Update Password"}
+          </button>
+        </form>
+
       </div>
     </div>
   );
