@@ -7,16 +7,17 @@ import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Supabase auto-handles recovery token from URL hash
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") setReady(true);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        setReady(true);
+      }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true);
@@ -27,12 +28,19 @@ const ResetPasswordPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      setDone(true);
-      setTimeout(() => navigate("/feed", { replace: true }), 2000);
+      navigate("/password-reset-success", { replace: true });
     } catch (err: any) {
       setError(err.message);
     } finally {
