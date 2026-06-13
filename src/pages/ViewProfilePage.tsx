@@ -255,15 +255,25 @@ const ViewProfilePage = () => {
         </div>
 
         <div className="mt-3 flex items-center justify-center gap-6">
-          <div className="text-center">
+          <button
+            type="button"
+            disabled={!(isOwnProfile || isAdmin)}
+            onClick={() => (isOwnProfile || isAdmin) && setFollowModal("followers")}
+            className="text-center disabled:cursor-default"
+          >
             <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
             <p className="text-xs text-muted-foreground">Followers</p>
-          </div>
+          </button>
           <div className="h-8 w-px bg-border" />
-          <div className="text-center">
+          <button
+            type="button"
+            disabled={!(isOwnProfile || isAdmin)}
+            onClick={() => (isOwnProfile || isAdmin) && setFollowModal("following")}
+            className="text-center disabled:cursor-default"
+          >
             <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
             <p className="text-xs text-muted-foreground">Following</p>
-          </div>
+          </button>
         </div>
 
         {mutualText && <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>}
