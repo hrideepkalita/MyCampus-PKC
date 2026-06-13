@@ -62,6 +62,7 @@ const ViewProfilePage = () => {
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [showPostScroller, setShowPostScroller] = useState(false);
   const [showFullGallery, setShowFullGallery] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!id) return;
