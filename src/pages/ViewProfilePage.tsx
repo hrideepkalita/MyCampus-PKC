@@ -62,6 +62,7 @@ const ViewProfilePage = () => {
   const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [showPostScroller, setShowPostScroller] = useState(false);
   const [showFullGallery, setShowFullGallery] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -78,6 +79,7 @@ const ViewProfilePage = () => {
     fetchMutuals();
     trackProfileView();
     checkFriendRequest();
+    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => setIsAdmin(!!data));
   }, [user, id]);
 
   const fetchProfile = async () => {
@@ -189,7 +191,7 @@ const ViewProfilePage = () => {
         </div>
       )}
 
-      {followModal && isOwnProfile && <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />}
+      {followModal && (isOwnProfile || isAdmin) && <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />}
 
       {showPostScroller && (
         <PostScrollViewer userId={profile.id} onClose={() => setShowPostScroller(false)} />
@@ -253,15 +255,25 @@ const ViewProfilePage = () => {
         </div>
 
         <div className="mt-3 flex items-center justify-center gap-6">
-          <div className="text-center">
+          <button
+            type="button"
+            disabled={!(isOwnProfile || isAdmin)}
+            onClick={() => (isOwnProfile || isAdmin) && setFollowModal("followers")}
+            className="text-center disabled:cursor-default"
+          >
             <p className="font-display text-lg font-bold text-foreground">{followersCount}</p>
             <p className="text-xs text-muted-foreground">Followers</p>
-          </div>
+          </button>
           <div className="h-8 w-px bg-border" />
-          <div className="text-center">
+          <button
+            type="button"
+            disabled={!(isOwnProfile || isAdmin)}
+            onClick={() => (isOwnProfile || isAdmin) && setFollowModal("following")}
+            className="text-center disabled:cursor-default"
+          >
             <p className="font-display text-lg font-bold text-foreground">{followingCount}</p>
             <p className="text-xs text-muted-foreground">Following</p>
-          </div>
+          </button>
         </div>
 
         {mutualText && <p className="mt-2 text-center text-xs text-muted-foreground">{mutualText}</p>}
