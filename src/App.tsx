@@ -26,6 +26,7 @@ import SearchPage from "./pages/SearchPage";
 import ViewProfilePage from "./pages/ViewProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NoticesPage from "./pages/NoticesPage";
+import GalleryFeedPage from "./pages/GalleryFeedPage";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect, createContext, useContext } from "react";
 
