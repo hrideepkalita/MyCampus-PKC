@@ -109,6 +109,7 @@ const AppContent = () => {
             <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="/notices" element={<ProtectedRoute><NoticesPage /></ProtectedRoute>} />
+            <Route path="/gallery/:userId" element={<ProtectedRoute><GalleryFeedPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
