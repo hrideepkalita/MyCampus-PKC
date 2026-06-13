@@ -373,7 +373,7 @@ const ProfilePage = () => {
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-muted-foreground">Gallery</p>
-            <button onClick={() => setShowFullGallery(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
+            <button onClick={() => navigate(`/gallery/${user!.id}`)} className="flex items-center gap-1 text-xs font-medium text-primary">
               All <ChevronRight className="h-3 w-3" />
             </button>
           </div>
