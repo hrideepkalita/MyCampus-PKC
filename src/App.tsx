@@ -26,6 +26,7 @@ import SearchPage from "./pages/SearchPage";
 import ViewProfilePage from "./pages/ViewProfilePage";
 import AdminPage from "./pages/AdminPage";
 import NoticesPage from "./pages/NoticesPage";
+import GalleryFeedPage from "./pages/GalleryFeedPage";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect, createContext, useContext } from "react";
 
@@ -108,6 +109,7 @@ const AppContent = () => {
             <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
             <Route path="/notices" element={<ProtectedRoute><NoticesPage /></ProtectedRoute>} />
+            <Route path="/gallery/:userId" element={<ProtectedRoute><GalleryFeedPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

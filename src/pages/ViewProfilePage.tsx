@@ -124,26 +124,19 @@ const ViewProfilePage = () => {
   const checkFollowing = async () => { const { data } = await supabase.from("follows").select("id").eq("follower_id", user!.id).eq("following_id", id!).maybeSingle(); setIsFollowing(!!data); };
   const checkTheyFollowMe = async () => { const { data } = await supabase.from("follows").select("id").eq("follower_id", id!).eq("following_id", user!.id).maybeSingle(); setTheyFollowMe(!!data); };
   const fetchFollowCounts = async () => {
-    const [{ count: followers }, { count: following }] = await Promise.all([
-      supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", id!),
-      supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", id!),
-    ]);
-    setFollowersCount(followers || 0);
-    setFollowingCount(following || 0);
+    const { data } = await supabase.rpc("get_follow_counts", { _user_id: id! });
+    const row = Array.isArray(data) ? data[0] : data;
+    setFollowersCount(Number(row?.followers_count) || 0);
+    setFollowingCount(Number(row?.following_count) || 0);
   };
 
   const fetchMutuals = async () => {
     if (!user || !id || user.id === id) return;
-    const [{ data: myFollowing }, { data: theirFollowers }] = await Promise.all([
-      supabase.from("follows").select("following_id").eq("follower_id", user.id),
-      supabase.from("follows").select("follower_id").eq("following_id", id),
-    ]);
-    const mySet = new Set((myFollowing || []).map(f => f.following_id));
-    const mutualIds = (theirFollowers || []).map(f => f.follower_id).filter(fid => mySet.has(fid) && fid !== user.id);
-    if (mutualIds.length === 0) { setMutualText(""); return; }
-    const { data: mutualProfiles } = await supabase.from("profiles").select("name").in("id", mutualIds.slice(0, 2));
-    const names = (mutualProfiles || []).map(p => p.name);
-    const remaining = mutualIds.length - names.length;
+    const { data } = await supabase.rpc("get_mutual_followers", { _viewer: user.id, _target: id });
+    const row = Array.isArray(data) ? data[0] : data;
+    const names: string[] = row?.names || [];
+    const remaining: number = Number(row?.remaining) || 0;
+    if (names.length === 0) { setMutualText(""); return; }
     if (names.length === 1 && remaining === 0) setMutualText(`Followed by ${names[0]}`);
     else if (names.length === 1) setMutualText(`Followed by ${names[0]} and ${remaining} other${remaining > 1 ? "s" : ""}`);
     else if (names.length >= 2 && remaining === 0) setMutualText(`Followed by ${names[0]} and ${names[1]}`);
@@ -287,6 +280,14 @@ const ViewProfilePage = () => {
         )}
 
         {/* Gallery */}
+        {galleryPhotos.length > 0 && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs font-semibold text-muted-foreground">Gallery</p>
+            <button onClick={() => navigate(`/gallery/${profile.id}`)} className="flex items-center gap-1 text-xs font-medium text-primary">
+              All <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         <PhotoGallery photos={galleryPhotos} onPhotoLiked={fetchGalleryPhotos} ownerName={profile.name} />
 
         {/* User Posts Grid */}

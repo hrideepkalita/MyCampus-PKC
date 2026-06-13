@@ -117,12 +117,10 @@ const ProfilePage = () => {
 
   const fetchFollowCounts = async () => {
     if (!user) return;
-    const [{ count: followers }, { count: following }] = await Promise.all([
-      supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", user.id),
-      supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
-    ]);
-    setFollowersCount(followers || 0);
-    setFollowingCount(following || 0);
+    const { data } = await supabase.rpc("get_follow_counts", { _user_id: user.id });
+    const row = Array.isArray(data) ? data[0] : data;
+    setFollowersCount(Number(row?.followers_count) || 0);
+    setFollowingCount(Number(row?.following_count) || 0);
   };
 
   const fetchGalleryPhotos = useCallback(async () => {
@@ -375,7 +373,7 @@ const ProfilePage = () => {
         <div className="mt-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-semibold text-muted-foreground">Gallery</p>
-            <button onClick={() => setShowFullGallery(true)} className="flex items-center gap-1 text-xs font-medium text-primary">
+            <button onClick={() => navigate(`/gallery/${user!.id}`)} className="flex items-center gap-1 text-xs font-medium text-primary">
               All <ChevronRight className="h-3 w-3" />
             </button>
           </div>

@@ -766,6 +766,20 @@ export type Database = {
         }
         Returns: string
       }
+      get_follow_counts: {
+        Args: { _user_id: string }
+        Returns: {
+          followers_count: number
+          following_count: number
+        }[]
+      }
+      get_mutual_followers: {
+        Args: { _target: string; _viewer: string }
+        Returns: {
+          names: string[]
+          remaining: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
