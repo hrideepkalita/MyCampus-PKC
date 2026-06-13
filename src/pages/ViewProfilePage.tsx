@@ -280,6 +280,14 @@ const ViewProfilePage = () => {
         )}
 
         {/* Gallery */}
+        {galleryPhotos.length > 0 && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs font-semibold text-muted-foreground">Gallery</p>
+            <button onClick={() => navigate(`/gallery/${profile.id}`)} className="flex items-center gap-1 text-xs font-medium text-primary">
+              All <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         <PhotoGallery photos={galleryPhotos} onPhotoLiked={fetchGalleryPhotos} ownerName={profile.name} />
 
         {/* User Posts Grid */}
