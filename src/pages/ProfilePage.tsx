@@ -117,12 +117,10 @@ const ProfilePage = () => {
 
   const fetchFollowCounts = async () => {
     if (!user) return;
-    const [{ count: followers }, { count: following }] = await Promise.all([
-      supabase.from("follows").select("id", { count: "exact", head: true }).eq("following_id", user.id),
-      supabase.from("follows").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
-    ]);
-    setFollowersCount(followers || 0);
-    setFollowingCount(following || 0);
+    const { data } = await supabase.rpc("get_follow_counts", { _user_id: user.id });
+    const row = Array.isArray(data) ? data[0] : data;
+    setFollowersCount(Number(row?.followers_count) || 0);
+    setFollowingCount(Number(row?.following_count) || 0);
   };
 
   const fetchGalleryPhotos = useCallback(async () => {
