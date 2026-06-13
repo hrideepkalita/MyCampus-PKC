@@ -191,7 +191,7 @@ const ViewProfilePage = () => {
         </div>
       )}
 
-      {followModal && isOwnProfile && <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />}
+      {followModal && (isOwnProfile || isAdmin) && <FollowersModal profileId={profile.id} type={followModal} onClose={() => setFollowModal(null)} />}
 
       {showPostScroller && (
         <PostScrollViewer userId={profile.id} onClose={() => setShowPostScroller(false)} />
