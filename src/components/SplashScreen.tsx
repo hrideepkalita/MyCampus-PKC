@@ -18,7 +18,7 @@ const SplashScreen = () => (
         MyCampus
       </h1>
       <p className="mt-3 text-sm text-white/60 text-center leading-relaxed">
-       <br/>Pub Kamrup College
+       <br/>Pub Kamrup College, Baihata Chariali
       </p>
     </motion.div>
     <div className="flex flex-1 flex-col items-center justify-end">
