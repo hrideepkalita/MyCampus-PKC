@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { Eye, EyeOff } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     setError("");
     if (password.length < 6) {
+      <PageMeta title="Set a New Password | MyCampus" description="Choose a new password to regain access to your MyCampus student account." path="/reset-password" />
       setError("Password must be at least 6 characters.");
       return;
     }

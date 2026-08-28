@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { CheckCircle2, XCircle } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const EmailVerifiedPage = () => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const EmailVerifiedPage = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[18vh]">
+      <PageMeta title="Email Verified | MyCampus" description="Your MyCampus email has been verified. Log in to connect with Pub Kamrup College students." path="/email-verified" />
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-lg">

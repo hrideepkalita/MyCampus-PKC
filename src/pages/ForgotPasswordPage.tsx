@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import luitxLogo from "@/assets/luitx-logo.png";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -35,6 +36,7 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center bg-black px-6 pb-6 pt-[18vh]">
+      <PageMeta title="Reset Your Password | MyCampus" description="Request a password reset link for your MyCampus account at Pub Kamrup College." path="/forgot-password" />
       <Link
         to="/"
         className="absolute left-5 top-6 flex items-center gap-1 text-sm text-white/70 hover:text-white"
