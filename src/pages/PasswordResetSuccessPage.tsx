@@ -22,7 +22,7 @@ const PasswordResetSuccessPage = () => {
 
         <div className="rounded-2xl border border-white/10 bg-[#1a1d2e] p-6 text-center">
           <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-          <h2 className="mt-3 font-display text-xl font-bold text-white">Password Reset Successful</h2>
+          <h1 className="mt-3 font-display text-xl font-bold text-white">Password Reset Successful</h1>
           <p className="mt-2 text-sm text-white/70">
             Your password has been updated. Please log in with your new password.
           </p>

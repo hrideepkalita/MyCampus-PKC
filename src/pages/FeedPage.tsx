@@ -41,6 +41,7 @@ const FeedImage = ({ src, onClick }: { src: string; onClick: () => void }) => {
       {!loaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
       <img
         src={src}
+        alt="Post media"
         className={`w-full max-h-[75vh] object-contain bg-black transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
         loading="lazy"
         decoding="async"
@@ -165,7 +166,7 @@ const FeedPost = memo(({
           </span>
 
           {post.profile.is_verified && (
-            <img src={verifiedBadge} className="h-3.5 w-3.5" />
+            <img src={verifiedBadge} alt="" aria-hidden="true" className="h-3.5 w-3.5" />
           )}
         </div>
 
@@ -183,6 +184,7 @@ const FeedPost = memo(({
       setMenuOpen(!menuOpen);
     }}
     className="relative z-20 p-1"
+    aria-label="Post options"
   >
     <MoreVertical className="h-4 w-4" />
   </button>
@@ -249,6 +251,7 @@ const FeedPost = memo(({
         />
         <button
           onClick={(e) => { e.stopPropagation(); onToggleMute(); }}
+          aria-label={isMuted ? "Unmute video" : "Mute video"}
           className="absolute bottom-2 right-2 z-10 bg-black/50 p-2 rounded-full"
         >
           {isMuted ? <VolumeX className="h-4 w-4 text-white" /> : <Volume2 className="h-4 w-4 text-white" />}
@@ -270,17 +273,17 @@ const FeedPost = memo(({
       {/* Actions */}
       <div className="px-4 py-2">
         <div className="flex items-center gap-4">
-          <button onClick={() => onLike(post)} className="flex items-center gap-1.5">
+          <button onClick={() => onLike(post)} aria-label="Like post" className="flex items-center gap-1.5">
             <Heart className={`h-5 w-5 ${post.user_liked ? "fill-red-500 text-red-500" : ""}`} />
             {post.like_count > 0 && <span className="text-xs">{post.like_count}</span>}
           </button>
 
-          <button onClick={() => onComment(post.id)} className="flex items-center gap-1.5">
+          <button onClick={() => onComment(post.id)} aria-label="View comments" className="flex items-center gap-1.5">
             <MessageCircle className="h-5 w-5" />
             {post.comment_count > 0 && <span className="text-xs">{post.comment_count}</span>}
           </button>
 
-          <button onClick={() => onShare(post)}>
+          <button onClick={() => onShare(post)} aria-label="Share post">
             <Share2 className="h-5 w-5" />
           </button>
         </div>
@@ -501,10 +504,10 @@ const FeedPage = () => {
         title="Home"
         rightContent={
           <div className="flex items-center gap-1.5">
-            <button onClick={toggleHearts} className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${heartsEnabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+            <button onClick={toggleHearts} aria-label="Toggle floating hearts" className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors ${heartsEnabled ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
               <Heart className={`h-3.5 w-3.5 ${heartsEnabled ? "fill-primary text-primary" : ""}`} />
             </button>
-            <button onClick={() => setShowCreate(true)} className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
+            <button onClick={() => setShowCreate(true)} aria-label="Create post" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md">
               <Plus className="h-4 w-4" />
             </button>
           </div>

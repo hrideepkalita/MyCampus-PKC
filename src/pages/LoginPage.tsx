@@ -76,7 +76,10 @@ const LoginPage = () => {
           <div className="flex h-36 w-36 items-center justify-center rounded-[2rem] bg-white shadow-xl">
             <img src={logo} alt="MyCampus" loading="eager" decoding="sync" className="h-28 w-28 object-contain" />
           </div>
-          <h1 className="mt-7 font-display text-4xl font-bold text-white">MyCampus</h1>
+          <h1 className="mt-7 font-display text-4xl font-bold text-white">
+            MyCampus
+            <span className="sr-only"> — Community app for Pub Kamrup College students</span>
+          </h1>
           <div className="text-sm text-white/70 mt-3 text-center leading-relaxed">
             <p>Computer Science Department</p>
             <p>Pub Kamrup College, Baihata Chariali</p>
@@ -133,6 +136,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

@@ -75,7 +75,7 @@ const SearchPage = () => {
     <div className="min-h-[100dvh] bg-background pb-24">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-3">
-          <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground flex-shrink-0">
+          <button onClick={() => navigate(-1)} aria-label="Go back" className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-muted-foreground flex-shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">

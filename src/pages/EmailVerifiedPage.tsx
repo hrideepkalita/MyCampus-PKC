@@ -71,13 +71,13 @@ const EmailVerifiedPage = () => {
           {status === "checking" && (
             <>
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <h2 className="mt-4 font-display text-lg font-bold text-white">Verifying your email...</h2>
+              <h1 className="mt-4 font-display text-lg font-bold text-white">Verifying your email...</h1>
             </>
           )}
           {status === "success" && (
             <>
               <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-              <h2 className="mt-3 font-display text-xl font-bold text-white">Email Verified</h2>
+              <h1 className="mt-3 font-display text-xl font-bold text-white">Email Verified</h1>
               <p className="mt-2 text-sm text-white/70">
                 Your account is now active. You can log in to MyCampus.
               </p>
@@ -92,7 +92,7 @@ const EmailVerifiedPage = () => {
           {status === "error" && (
             <>
               <XCircle className="mx-auto h-14 w-14 text-destructive" />
-              <h2 className="mt-3 font-display text-lg font-bold text-white">Verification Failed</h2>
+              <h1 className="mt-3 font-display text-lg font-bold text-white">Verification Failed</h1>
               <p className="mt-2 text-sm text-white/70">{error}</p>
               <button
                 onClick={() => navigate("/", { replace: true })}
