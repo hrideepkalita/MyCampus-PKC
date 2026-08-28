@@ -84,7 +84,6 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     setError("");
     if (password.length < 6) {
-      <PageMeta title="Set a New Password | MyCampus" description="Choose a new password to regain access to your MyCampus student account." path="/reset-password" />
       setError("Password must be at least 6 characters.");
       return;
     }
@@ -106,6 +105,7 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[20vh]">
+      <PageMeta title="Set a New Password | MyCampus" description="Choose a new password to regain access to your MyCampus student account." path="/reset-password" />
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-lg">
