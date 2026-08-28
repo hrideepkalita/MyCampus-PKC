@@ -279,6 +279,7 @@ const ConfessionsPage = () => {
         rightContent={
           <button
             onClick={() => setShowCompose(!showCompose)}
+            aria-label="Write a confession"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
           >
             <Plus className="h-4 w-4" />
@@ -416,12 +417,12 @@ const ConfessionsPage = () => {
                 {confession.status === "approved" && (
                   <div className="mt-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleLike(confession.id, confession.user_liked)}
+                      <button aria-label="Like confession" onClick={() => handleLike(confession.id, confession.user_liked)}
                         className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all active:scale-95 ${confession.user_liked ? "bg-secondary/15 text-secondary" : "bg-background/50 text-muted-foreground"}`}>
                         <Heart className="h-3.5 w-3.5" fill={confession.user_liked ? "currentColor" : "none"} />
                         {confession.like_count}
                       </button>
-                      <button onClick={() => toggleReplies(confession.id)}
+                      <button aria-label="Show replies" onClick={() => toggleReplies(confession.id)}
                         className="flex items-center gap-1 rounded-full bg-background/50 px-3 py-1 text-xs font-medium text-muted-foreground active:scale-95">
                         <MessageCircle className="h-3.5 w-3.5" />
                         {confReplies.length > 0 ? confReplies.length : "Reply"}
@@ -429,13 +430,13 @@ const ConfessionsPage = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       {!confession.user_reported && (
-                        <button onClick={() => handleReport(confession.id)}
+                        <button aria-label="Report confession" onClick={() => handleReport(confession.id)}
                           className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors">
                           <Flag className="h-3.5 w-3.5" />
                         </button>
                       )}
                       {isAdmin && (
-                        <button onClick={() => handleDelete(confession.id)}
+                        <button aria-label="Delete confession" onClick={() => handleDelete(confession.id)}
                           className="rounded-full p-1.5 text-muted-foreground/50 hover:text-destructive transition-colors">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>

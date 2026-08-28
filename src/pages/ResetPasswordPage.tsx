@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { Eye, EyeOff } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
@@ -104,6 +105,7 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[20vh]">
+      <PageMeta title="Set a New Password | MyCampus" description="Choose a new password to regain access to your MyCampus student account." path="/reset-password" />
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-lg">
@@ -127,6 +129,7 @@ const ResetPasswordPage = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 import luitxLogo from "@/assets/luitx-logo.png";
 import { Eye, EyeOff } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -71,12 +72,16 @@ const LoginPage = () => {
 
   return (
     <div className="relative flex min-h-[100dvh] flex-col items-center bg-black px-6 pb-6 pt-[22vh] overflow-hidden">
+      <PageMeta title="MyCampus — Campus Social App for Pub Kamrup College" description="Join MyCampus, the private social and dating app for Pub Kamrup College students. Make friends, share posts, read notices and confessions." path="/" />
       <div className="relative z-10 w-full max-w-sm">
         <div className="flex flex-col items-center mb-10">
           <div className="flex h-36 w-36 items-center justify-center rounded-[2rem] bg-white shadow-xl">
             <img src={logo} alt="MyCampus" loading="eager" decoding="sync" className="h-28 w-28 object-contain" />
           </div>
-          <h1 className="mt-7 font-display text-4xl font-bold text-white">MyCampus</h1>
+          <h1 className="mt-7 font-display text-4xl font-bold text-white">
+            MyCampus
+            <span className="sr-only"> — Community app for Pub Kamrup College students</span>
+          </h1>
           <div className="text-sm text-white/70 mt-3 text-center leading-relaxed">
             <p>Computer Science Department</p>
             <p>Pub Kamrup College, Baihata Chariali</p>
@@ -133,6 +138,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

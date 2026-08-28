@@ -134,6 +134,7 @@ const LostFoundPage = () => {
         rightContent={
           <button
             onClick={() => setShowForm(prev => !prev)}
+            aria-label="Report a lost or found item"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-90 transition-transform"
           >
             <Plus className="h-4 w-4" />
@@ -259,6 +260,7 @@ const LostFoundPage = () => {
               {item.image_url && (
                 <button
                   onClick={() => setPreviewImage(item.image_url)}
+                  aria-label={`View image for ${item.title}`}
                   className="mt-3 w-full overflow-hidden rounded-xl"
                 >
                   <img
@@ -283,6 +285,7 @@ const LostFoundPage = () => {
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}
+                    aria-label="Delete item"
                     className="flex items-center justify-center gap-1 rounded-xl bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive"
                   >
                     <X className="h-3 w-3" />

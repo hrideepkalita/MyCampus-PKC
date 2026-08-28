@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { CheckCircle2, XCircle } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const EmailVerifiedPage = () => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const EmailVerifiedPage = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[18vh]">
+      <PageMeta title="Email Verified | MyCampus" description="Your MyCampus email has been verified. Log in to connect with Pub Kamrup College students." path="/email-verified" />
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-lg">
@@ -71,13 +73,13 @@ const EmailVerifiedPage = () => {
           {status === "checking" && (
             <>
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <h2 className="mt-4 font-display text-lg font-bold text-white">Verifying your email...</h2>
+              <h1 className="mt-4 font-display text-lg font-bold text-white">Verifying your email...</h1>
             </>
           )}
           {status === "success" && (
             <>
               <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-              <h2 className="mt-3 font-display text-xl font-bold text-white">Email Verified</h2>
+              <h1 className="mt-3 font-display text-xl font-bold text-white">Email Verified</h1>
               <p className="mt-2 text-sm text-white/70">
                 Your account is now active. You can log in to MyCampus.
               </p>
@@ -92,7 +94,7 @@ const EmailVerifiedPage = () => {
           {status === "error" && (
             <>
               <XCircle className="mx-auto h-14 w-14 text-destructive" />
-              <h2 className="mt-3 font-display text-lg font-bold text-white">Verification Failed</h2>
+              <h1 className="mt-3 font-display text-lg font-bold text-white">Verification Failed</h1>
               <p className="mt-2 text-sm text-white/70">{error}</p>
               <button
                 onClick={() => navigate("/", { replace: true })}

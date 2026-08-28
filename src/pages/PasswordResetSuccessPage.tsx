@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 import { CheckCircle2 } from "lucide-react";
+import PageMeta from "@/components/PageMeta";
 
 const PasswordResetSuccessPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const PasswordResetSuccessPage = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center bg-black px-6 pt-[18vh]">
+      <PageMeta title="Password Updated | MyCampus" description="Your MyCampus password was updated successfully. Log in with your new password." path="/password-reset-success" />
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-lg">
@@ -22,7 +24,7 @@ const PasswordResetSuccessPage = () => {
 
         <div className="rounded-2xl border border-white/10 bg-[#1a1d2e] p-6 text-center">
           <CheckCircle2 className="mx-auto h-14 w-14 text-primary" />
-          <h2 className="mt-3 font-display text-xl font-bold text-white">Password Reset Successful</h2>
+          <h1 className="mt-3 font-display text-xl font-bold text-white">Password Reset Successful</h1>
           <p className="mt-2 text-sm text-white/70">
             Your password has been updated. Please log in with your new password.
           </p>

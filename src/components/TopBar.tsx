@@ -73,12 +73,14 @@ const TopBar = ({ title, rightContent }: TopBarProps) => {
           </button>
           <button
             onClick={() => navigate("/search")}
+            aria-label="Search"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-card text-muted-foreground transition-colors hover:text-foreground"
           >
             <Search className="h-4 w-4" />
           </button>
           <button
             onClick={() => navigate("/notifications")}
+            aria-label="Notifications"
             className="relative flex h-9 w-9 items-center justify-center rounded-full bg-card text-muted-foreground transition-colors hover:text-foreground"
           >
             <Bell className="h-4 w-4" />
